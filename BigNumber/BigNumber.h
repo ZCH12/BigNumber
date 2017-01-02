@@ -1,12 +1,4 @@
-//
-//  BigNumber.h
-//  BigNumber
-//
-//  Created by 张驰荣 on 2016/12/29.
-//  Copyright © 2016年 张驰荣. All rights reserved.
-//
-
-#ifndef BigNumber_h
+﻿#ifndef BigNumber_h
 #define BigNumber_h
 
 #include <iostream>
@@ -19,39 +11,59 @@
 //2.抛出异常
 //3.改变对象（重新分配）
 
+//错误值的定义
+#define ERR_UNKNOWEXCEPTION 0
+#define ERR_ARRAYINDEXOUTOFBOUNDSEXCEPTION 1
+#define ERR_MEMORYALLOCATEDEXCEPTION 2
+#define ERR_NULLPOINTEXCEPTION 3
+#define ERR_ILLEGALNUMBER 4
+#define ERR_DIVISORCANNOTBEZERO 5
+#define ERR_ILLEGALPARAM 6
+
+
 class BFException
 {
 private:
-    std::string message;
+	std::string message;
 public:
-    BFException(std::string detail);
-    ~BFException();
-    void GetMessage();       //输出错误信息
+	BFException(int ErrVal, std::string detail);
+	~BFException();
+	//void GetMessage();       //输出错误信息
 };
 
 
 class BigFigure
 {
 private:
-    struct BFDetail
-    {
-        size_t ReferCount;      //引用计数,用于判断何时销毁
-        size_t AllocatedSize;   //数字字符串分配的大小
-        size_t Accuracy;        //浮点数部分的最大精确度
-        bool Minus;             //表示是否为负数,如果为负数,则该值为1
-        char *NumInt;           //可输出的整数部分的字符串的首地址
-        char *NumFloat;         //可输出的浮点数部分的字符串的首地址
-        char *StringHead;       //保存申请的字符串空间的首指针
-    } *Detail;
-    void FreeDetail();
+	struct BFDetail
+	{
+		size_t ReferCount;      //引用计数,用于判断何时销毁
+		size_t AllocatedSize;   //数字字符串分配的大小
+		size_t Accuracy;        //浮点数部分的最大精确度
+		size_t IntLen;			//整数部分数字的有效位数(实际长度)
+		bool Minus;             //表示是否为负数,如果为负数,则该值为1
+		char *NumInt;           //可输出的整数部分的字符串的首地址
+		char *NumFloat;         //可输出的浮点数部分的字符串的首地址
+		char *StringHead;       //保存申请的字符串空间的首指针
+
+	} *Detail;
+	//void FreeDetail();
 public:
-    BigFigure();
-    BigFigure(size_t size);
-    BigFigure(const BigFigure& Base);
-    ~BigFigure();
-    void core_add();
-    
+	BigFigure();
+	BigFigure(size_t IntSize, size_t FloatSize)throw(...);
+	BigFigure(const BigFigure& Base);
+	~BigFigure();
+	void core_IntAdd(BigFigure &result, BigFigure &OperandA, BigFigure &OperandB);
+	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);
+	//void core_FloatAdd();
+	//void core_FloatAdd();
+
 };
+
+/*
+全局基础函数
+*/
+int NumCheck(std::string CheckString);		//检查字符串是否为合法数字,并返回数字的类型
 
 
 

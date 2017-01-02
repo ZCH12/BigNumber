@@ -1,4 +1,4 @@
-//
+﻿//
 //  main.cpp
 //  BigNumber
 //
@@ -7,9 +7,10 @@
 //
 
 #include <iostream>
+#include "BigNumber.h"
 
 int main(int argc, const char * argv[]) {
-    // insert code here...
-    std::cout << "Hello, World!\n";
+	std::cout << NumCheck("45.123") << std::endl;
+	system("pause");
     return 0;
 }
