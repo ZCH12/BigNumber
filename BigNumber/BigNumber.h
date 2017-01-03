@@ -41,6 +41,7 @@ private:
 		size_t AllocatedSize;   //数字字符串分配的大小
 		size_t Accuracy;        //浮点数部分的最大精确度
 		size_t IntLen;			//整数部分数字的有效位数(实际长度)
+		size_t IntAllocatedLen;	//整数部分的已分配内存长度
 		bool Minus;             //表示是否为负数,如果为负数,则该值为1
 		char *NumInt;           //可输出的整数部分的字符串的首地址
 		char *NumFloat;         //可输出的浮点数部分的字符串的首地址
@@ -57,14 +58,19 @@ public:
 	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);
 	//void core_FloatAdd();
 	//void core_FloatAdd();
+	void atoBF(std::string NumString);
+	void printfBF();
+	void printDetail();
 
 };
+
+typedef BigFigure BF;
 
 /*
 全局基础函数
 */
-int NumCheck(std::string CheckString);		//检查字符串是否为合法数字,并返回数字的类型
-
-
+int NumCheck(std::string CheckString);							//检查字符串是否为合法数字,并返回数字的类型
+int BitCount(std::string NumString, int NumType, int result[2]);//计算数字的整数位的长度和小数位的长度
+int BitCount_check(std::string NumString, int result[2]);		//检查数字的合法性并计算整数位和小数位的长度
 
 #endif
