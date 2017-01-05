@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-#define DEFAULT_ACCURACY 8      //默认小数的精度保留8位,如果有更高精度的需求,可修改它
+//#define DEFAULT_ACCURACY 8      //默认小数的精度保留8位,如果有更高精度的需求,可修改它
 
 //定义超出长度的数字的处理方式
 //1.截断
@@ -19,7 +19,18 @@
 #define ERR_ILLEGALNUMBER 4
 #define ERR_DIVISORCANNOTBEZERO 5
 #define ERR_ILLEGALPARAM 6
+#define ERR_NUMBERTOOBIG 7
+#define ERR_MAYACCURACYLOSS 8
 
+//编译开关
+
+
+
+//全局变量
+extern bool ReserveZero;			//是否保留小数点后的0
+extern bool ScinotationShow;		//是否以科学计数法显示数字
+extern bool ConfirmWontLossAccuracy;//确保不截断小数的有效位(关闭之后如果赋值时小数位太多,则会省略多出的部分;如果开启,则会抛出异常)
+extern size_t ScinotationLen;		//用小数点表示时的有效位数
 
 class BFException
 {

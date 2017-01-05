@@ -11,8 +11,9 @@
 
 //控制显示方式的变量
 bool ReserveZero = true;			//保留小数后的0
-bool ScinotationShow = false;	//不以科学计数法显示数字
-size_t ScinotationLen = 5;		//科学计数法时有效位数为5位
+bool ScinotationShow = false;		//不以科学计数法显示数字
+bool ConfirmWontLossAccuracy = true;	//确保不截断小数的有效位(关闭之后如果赋值时小数位太多,则会省略多出的部分;如果开启,则会抛出异常)
+size_t ScinotationLen = 5;			//科学计数法时有效位数为5位
 
 
 BFException::BFException(int ErrVal, std::string detail)
@@ -99,35 +100,136 @@ void BigFigure::atoBF(std::string NumString)
 {
 	int NumType;
 	const char *tempString = NumString.c_str();
-	size_t len;
-	NumType = NumCheck(NumString);
+	size_t len, len2;
+	int exponent;			//用于科学计数法的计算位数,保存科学计数法的指数部分
+	int NumLen[2] = { 0 };
+	int NumPart = 0;
+	size_t r_p = 0, w_p, e_p = 0;	//记录科学计数法时两个下标(一个读的下标,一个写的下标),e_p是E的下标
+	NumType = NumCheck(NumString);					//检查数字类型
+	NumPart = BitCount(NumString, NumType, NumLen);	//计算长度
+	if (NumPart > 1)	//内存不足阻止执行
+	{
+		if (NumLen[0] > Detail->IntAllocatedLen)
+		{
+			throw BFException(ERR_NUMBERTOOBIG, "已分配的内存无法存放传入的变量");
+		}
+		else if (NumLen[1] > Detail->Accuracy)
+		{
+			if (ConfirmWontLossAccuracy)
+				throw BFException(ERR_MAYACCURACYLOSS, "该对象设置的精度太小,可能丢失精度");
+		}
+	}
+
 	Detail->Minus = false;
 	switch (NumType)
 	{
-		//整数
-	case -1:
+	case -1://负整数
 		Detail->Minus = true;
-	case 1:
-		Detail->IntLen = NumString.length();										//计算整数部分长度
+		Detail->IntLen = NumString.length() - 1;
 		Detail->NumInt = Detail->StringHead + Detail->IntAllocatedLen - NumString.length();
-		strcpy(Detail->NumInt, tempString);											//复制整个字符串
+		strcpy(Detail->NumInt, tempString + 1);											//复制除负号外的字符
 		break;
-	case -2:
+	case 1://正整数
+		Detail->Minus = false;
+		Detail->IntLen = NumString.length();											//计算整数部分长度
+		Detail->NumInt = Detail->StringHead + Detail->IntAllocatedLen - NumString.length();
+		strcpy(Detail->NumInt, tempString);												//复制整个字符串
+		break;
+	case -2://负小数
 		Detail->Minus = true;
-	case 2:
-		//小数
 		len = 0;
+		while (tempString[len] != '.')len++;		//找到小数点所在的位置,len代表小数点是第几个字符(从1开始计数)
+		Detail->NumInt = Detail->StringHead + Detail->IntAllocatedLen - len - 1;			//计算写入位置,修改整数部分字符串的指针
+		strncpy(Detail->NumInt, tempString + 1, len - 1);									//复制整数部分
+		Detail->IntLen = len;															//保存整数部分的长度
+		strncpy(Detail->NumFloat, tempString + len + 1, Detail->Accuracy);				//复制小数部分
+		break;
+	case 2://正小数
+		len = 0;
+		Detail->Minus = false;
 		while (tempString[len] != '.')len++;		//找到小数点所在的位置,len代表小数点是第几个字符(从1开始计数)
 		Detail->NumInt = Detail->StringHead + Detail->IntAllocatedLen - len;			//计算写入位置,修改整数部分字符串的指针
 		strncpy(Detail->NumInt, tempString, len);										//复制整数部分
 		Detail->IntLen = len;															//保存整数部分的长度
 		strncpy(Detail->NumFloat, tempString + len + 1, Detail->Accuracy);				//复制小数部分
 		break;
-	case -3:
-		Detail->Minus = true;
-	case 3:
-		//科学计数法表示的数
+	case -30://负科学计数数(正指数)
+		r_p = 1;
+		Detail->Minus = true;															//保存负号
+		Detail->NumInt = Detail->StringHead + Detail->IntAllocatedLen - NumLen[0];		//找到写入位置
+		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;
+		while ((tempString[r_p] == '0' || tempString[r_p] == '.') && r_p < e_p) r_p++;
+		if (tempString[r_p] == 'E' || tempString[r_p] == 'e')
+		{
+			//数字为0
+			Detail->NumInt[0] = '0';
+			Detail->NumFloat[0] = 0;
+		}
+		else {
+			//数字不为0,开始进行复制
+			w_p = 0;
+			while (w_p < NumLen[0] && r_p < e_p)
+			{
+				Detail->NumInt[w_p++] = tempString[r_p++];
+			}
+			if (r_p < NumString.length())
+				while (w_p < NumLen[0])
+					Detail->NumInt[w_p++] = '0';
+			w_p = 0;
+			while (w_p < NumLen[1] && r_p < e_p)
+			{
+				Detail->NumFloat[w_p++] = tempString[r_p++];
+			}
+			if (r_p < NumString.length())
+				while (w_p < NumLen[1])
+					Detail->NumFloat[w_p++] = '0';
+		}
 		break;
+	case 30://正科学计数数(正指数)
+		r_p = 0;
+		Detail->Minus = false;															//保存负号
+		Detail->NumInt = Detail->StringHead + Detail->IntAllocatedLen - NumLen[0];		//找到写入位置
+		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;
+		while ((tempString[r_p] == '0' || tempString[r_p] == '.') && r_p < e_p) r_p++;
+		if (tempString[r_p] == 'E' || tempString[r_p] == 'e')
+		{
+			//数字为0
+			Detail->NumInt[0] = '0';
+			Detail->NumFloat[0] = 0;
+		}
+		else {
+			//数字不为0,开始进行复制
+			w_p = 0;
+			while (w_p < NumLen[0] && r_p < e_p)
+			{
+				Detail->NumInt[w_p++] = tempString[r_p++];
+			}
+			if (r_p < NumString.length())
+				while (w_p < NumLen[0])
+					Detail->NumInt[w_p++] = '0';
+			w_p = 0;
+			while (w_p < NumLen[1] && r_p < e_p)
+			{
+				Detail->NumFloat[w_p++] = tempString[r_p++];
+			}
+			if (r_p < NumString.length())
+				while (w_p < NumLen[1])
+					Detail->NumFloat[w_p++] = '0';
+		}
+		break;
+
+	case -31://负科学计数数(负指数)
+		Detail->Minus = true;															//保存负号
+		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;
+		while ((tempString[r_p] == '0' || tempString[r_p] == '.') && r_p < e_p) r_p++;
+
+		break;
+
+	case 31://正科学计数数(负指数)
+		Detail->Minus = false;
+
+		break;
+	default:
 	case 0:
 		throw BFException(ERR_ILLEGALNUMBER, "字符串表示的不是一个合法的数字");
 		break;
@@ -137,23 +239,176 @@ void BigFigure::atoBF(std::string NumString)
 
 //显示当前对象存储的数字
 /*
-未完成
+已完成,待检验
+有bug
 */
 void BigFigure::printfBF()
 {
-
+	size_t unPrintZero = 0;		//记录还未显示出来的0的个数
+	size_t a = 0;
+	if (Detail->Minus)
+		printf("-");
 	if (ScinotationShow)
 	{
 		//以科学计数法显示
+		size_t nowLen = 1;		//统计已输出的有效位的个数
+		size_t skip = 0;
 
+		while (Detail->NumInt[a] == '0')
+			a++, skip++;
+		if (Detail->NumInt[a] == 0)
+		{
+			//整数部分已经为0,已经被跳过
+			a = 0;
+			while (Detail->NumFloat[a] == '0')
+				a++, skip++;
+			if (Detail->NumFloat[a] == 0)
+			{
+				//发现全部项都为0,数字为0
+				skip = 0;
+				printf("0");
+			}
+			else {
+				printf("%c", Detail->NumFloat[a]);
+				a++;
+			}
+			//显示剩余的应显示的位
+			//if (nowLen++ < ScinotationLen&&Detail->NumFloat[a] != 0)
+				//printf("%c", Detail->NumFloat[a++]);
+			while (nowLen < ScinotationLen&&Detail->NumFloat[a] != 0)
+			{
+				if (Detail->NumFloat[a] == '0')
+					unPrintZero += 1;
+				else
+				{
+					if (unPrintZero != 0)
+					{
+						printf("%0*d", unPrintZero, 0);
+						unPrintZero = 0;
+					}
+					printf("%c", Detail->NumFloat[a++]);
+				}
+				nowLen++;
+			}
+			//用0补齐有效位数
+			if (ReserveZero) {
+				if (Detail->NumFloat[a] == 0)
+					for (; nowLen < ScinotationLen; nowLen++)
+						printf("0");
+			}
+			printf("E%s%d\n", skip ? "-" : "+", skip);
+		}
+		else {
+			//整数部分不为0,输出第一个有效位,接着输出第二个有效位
+			printf("%c", Detail->NumInt[a++]);
+			skip = 0;			//在这里skip用于存储在整数位后被移动到小数位的位数
+			bool hasPoint = false;
+
+			while (!hasPoint&&nowLen < ScinotationLen&&Detail->NumInt[a] != 0)	//等待需要小数点的地方
+			{
+				if (!ReserveZero) {
+					//不保留末尾的0
+					if (Detail->NumInt[a] == '0')
+						unPrintZero += 1;
+					else
+					{
+						if (unPrintZero != 0)
+						{
+							printf("%s%0*d", hasPoint ? "" : ".", unPrintZero, 0);
+							unPrintZero = 0;
+							hasPoint = true;
+						}
+						printf("%s%c", hasPoint ? "" : ".", Detail->NumInt[a]);
+						hasPoint = true;
+					}
+				}
+				else {
+					printf("%s%c", hasPoint ? "" : ".", Detail->NumInt[a]);
+					hasPoint = true;
+				}
+				nowLen++, a++, skip++;
+			}
+			while (nowLen < ScinotationLen&&Detail->NumInt[a] != 0)
+			{
+				if (!ReserveZero) {
+					//不保留末尾的0
+					if (Detail->NumInt[a] == '0')
+						unPrintZero += 1;
+					else
+					{
+						if (unPrintZero != 0)
+						{
+							printf("%0*d", unPrintZero, 0);
+							unPrintZero = 0;
+						}
+						printf("%c", Detail->NumInt[a]);
+					}
+				}
+				else {
+					printf("%c", Detail->NumInt[a]);
+				}
+				nowLen++, a++, skip++;
+			}
+			if (nowLen == ScinotationLen)	//有效位输出足够之后,剩下的位忽略,只计算长度
+			{
+				while (Detail->NumInt[a] != 0)
+					a++, skip++;
+			}
+
+			a = 0;
+			while (nowLen < ScinotationLen&&Detail->NumFloat[a] != 0)
+			{
+				if (!ReserveZero)	//不保留多余的0
+				{
+					if (Detail->NumFloat[a] == '0')
+						unPrintZero += 1;
+					else
+					{
+						if (unPrintZero != 0)
+						{
+							printf("%0*d", unPrintZero, 0);
+							unPrintZero = 0;
+						}
+						printf("%c", Detail->NumFloat[a]);
+					}
+				}
+				else printf("%c", Detail->NumFloat[a]);
+
+				nowLen++, a++;
+			}
+			printf("E+%d\n", skip);
+		}
 	}
 	else {
 		//直接输出数字
 		printf("%s", Detail->NumInt);
-		if (Detail->Accuracy)
-			printf(".%s\n", Detail->NumFloat);
+		unPrintZero = 0;
+		if (Detail->NumFloat[0] != 0)
+		{
+			printf(".");
+			if (!ReserveZero) {
+				//不保留末尾的0
+				while (Detail->NumFloat[a] != 0) {
+					if (Detail->NumFloat[a] == '0')
+						unPrintZero += 1;
+					else
+					{
+						if (unPrintZero != 0)
+						{
+							printf("%0*d", unPrintZero, 0);
+							unPrintZero = 0;
+						}
+						printf("%c", Detail->NumFloat[a]);
+					}
+					a++;
+				}
+			}
+			else {
+				printf("%s", Detail->NumFloat);
+			}
+		}
+		printf("\n");
 	}
-
 }
 
 //打印该对象的详细信息
@@ -167,14 +422,16 @@ void BigFigure::printDetail()
 		"整数部分有效位数:%d\n"
 		"小数最大存储精度:%d\n"
 		"以科学计数法输出:%s\n"
-		"科学计数法输出时有效位数:%d\n",
+		"科学计数法输出时有效位数:%d\n"
+		"值:",
 		Detail->AllocatedSize, Detail->IntAllocatedLen + 1, Detail->AllocatedSize - Detail->IntAllocatedLen - 1,
 		Detail->IntLen,
 		Detail->Accuracy,
 		ScinotationShow ? "是" : "否",
 		ScinotationLen
 	);
-
+	printfBF();
+	return;
 }
 
 
@@ -363,16 +620,14 @@ int BitCount(std::string NumString, int NumType, int result[2])
 		if (len == len2)
 			result[1] = len2 - len - exponent;
 		else
-			result[1] = len2 - len - 1 - exponent;							//多减去一个小数点
+			result[1] = len2 - len - 1 - exponent;				//多减去一个小数点
 		if (result[1] < 0)
 		{
 			result[1] = 0;
 			return 1;
 		}
 		else
-		{
 			return 2;
-		}
 	case 31:	//正小数(负指数)
 		len2 = 0;
 		while (tempString[len2] != 'E' && tempString[len2] != 'e')len2++;
