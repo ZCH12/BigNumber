@@ -101,7 +101,7 @@ void BigFigure::atoBF(std::string NumString)
 	int NumType;
 	const char *tempString = NumString.c_str();
 	size_t len, len2;
-	int exponent;			//用于科学计数法的计算位数,保存科学计数法的指数部分
+	long exponent;			//用于科学计数法的计算位数,保存科学计数法的指数部分
 	int NumLen[2] = { 0 };
 	int NumPart = 0;
 	size_t r_p = 0, w_p, e_p = 0;	//记录科学计数法时两个下标(一个读的下标,一个写的下标),e_p是E的下标
@@ -157,8 +157,8 @@ void BigFigure::atoBF(std::string NumString)
 		r_p = 1;
 		Detail->Minus = true;															//保存负号
 		Detail->NumInt = Detail->StringHead + Detail->IntAllocatedLen - NumLen[0];		//找到写入位置
-		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;
-		while ((tempString[r_p] == '0' || tempString[r_p] == '.') && r_p < e_p) r_p++;
+		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;					//找到E的位置
+		while ((tempString[r_p] == '0' || tempString[r_p] == '.') && r_p < e_p) r_p++;	//找到第一个有效数字
 		if (tempString[r_p] == 'E' || tempString[r_p] == 'e')
 		{
 			//数字为0
@@ -170,7 +170,10 @@ void BigFigure::atoBF(std::string NumString)
 			w_p = 0;
 			while (w_p < NumLen[0] && r_p < e_p)
 			{
-				Detail->NumInt[w_p++] = tempString[r_p++];
+				if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
+					Detail->NumInt[w_p++] = tempString[r_p++];
+				else
+					r_p++;
 			}
 			if (r_p < NumString.length())
 				while (w_p < NumLen[0])
@@ -178,7 +181,10 @@ void BigFigure::atoBF(std::string NumString)
 			w_p = 0;
 			while (w_p < NumLen[1] && r_p < e_p)
 			{
-				Detail->NumFloat[w_p++] = tempString[r_p++];
+				if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
+					Detail->NumFloat[w_p++] = tempString[r_p++];
+				else
+					r_p++;
 			}
 			if (r_p < NumString.length())
 				while (w_p < NumLen[1])
@@ -189,8 +195,8 @@ void BigFigure::atoBF(std::string NumString)
 		r_p = 0;
 		Detail->Minus = false;															//保存负号
 		Detail->NumInt = Detail->StringHead + Detail->IntAllocatedLen - NumLen[0];		//找到写入位置
-		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;
-		while ((tempString[r_p] == '0' || tempString[r_p] == '.') && r_p < e_p) r_p++;
+		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;					//找到E的位置
+		while ((tempString[r_p] == '0' || tempString[r_p] == '.') && r_p < e_p) r_p++;	//找到第一个有效数字
 		if (tempString[r_p] == 'E' || tempString[r_p] == 'e')
 		{
 			//数字为0
@@ -202,7 +208,10 @@ void BigFigure::atoBF(std::string NumString)
 			w_p = 0;
 			while (w_p < NumLen[0] && r_p < e_p)
 			{
-				Detail->NumInt[w_p++] = tempString[r_p++];
+				if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
+					Detail->NumInt[w_p++] = tempString[r_p++];
+				else
+					r_p++;
 			}
 			if (r_p < NumString.length())
 				while (w_p < NumLen[0])
@@ -210,7 +219,10 @@ void BigFigure::atoBF(std::string NumString)
 			w_p = 0;
 			while (w_p < NumLen[1] && r_p < e_p)
 			{
-				Detail->NumFloat[w_p++] = tempString[r_p++];
+				if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
+					Detail->NumFloat[w_p++] = tempString[r_p++];
+				else
+					r_p++;
 			}
 			if (r_p < NumString.length())
 				while (w_p < NumLen[1])
@@ -220,8 +232,9 @@ void BigFigure::atoBF(std::string NumString)
 
 	case -31://负科学计数数(负指数)
 		Detail->Minus = true;															//保存负号
-		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;
-		while ((tempString[r_p] == '0' || tempString[r_p] == '.') && r_p < e_p) r_p++;
+		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;					//找到E的位置
+		exponent = atol(tempString + e_p + 1);											//把指数转化为long类型
+		while (tempString[r_p] == '0' && r_p < e_p) r_p++;								//找到第一个有效数字
 
 		break;
 
