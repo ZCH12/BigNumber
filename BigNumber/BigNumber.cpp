@@ -1,5 +1,6 @@
 ﻿#include <memory>
 #include <cstdio>
+#include <sstream>
 //默认的长度分配内存的大小
 
 /*
@@ -92,6 +93,7 @@ void BigFigure::core_IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure 
 
 }
 
+#if 0
 //将字符串转换为BF类型,并保存在当前this对象中
 /*
 #######未完成
@@ -159,36 +161,60 @@ void BigFigure::atoBF(std::string NumString)
 		Detail->NumInt = Detail->StringHead + Detail->IntAllocatedLen - NumLen[0];		//找到写入位置
 		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;					//找到E的位置
 		while ((tempString[r_p] == '0' || tempString[r_p] == '.') && r_p < e_p) r_p++;	//找到第一个有效数字
+		NumLen[0] -= r_p;
 		if (tempString[r_p] == 'E' || tempString[r_p] == 'e')
 		{
 			//数字为0
 			Detail->NumInt[0] = '0';
 			Detail->NumFloat[0] = 0;
+			break;
 		}
 		else {
 			//数字不为0,开始进行复制
-			w_p = 0;
-			while (w_p < NumLen[0] && r_p < e_p)
+			if (NumLen[0] > 0)
 			{
-				if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
-					Detail->NumInt[w_p++] = tempString[r_p++];
-				else
-					r_p++;
+				//大于0的数
+				w_p = 0;
+				while (w_p < NumLen[0] && r_p < e_p)
+				{
+					if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
+						Detail->NumInt[w_p++] = tempString[r_p++];
+					else
+						r_p++;
+				}
+				if (r_p < e_p)
+					while (w_p < NumLen[0])
+						Detail->NumInt[w_p++] = '0';
+				w_p = 0;
+				while (w_p < NumLen[1] && r_p < e_p)
+				{
+					if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
+						Detail->NumFloat[w_p++] = tempString[r_p++];
+					else
+						r_p++;
+				}
+				if (r_p < e_p)
+					while (w_p < NumLen[1])
+						Detail->NumFloat[w_p++] = '0';
 			}
-			if (r_p < NumString.length())
-				while (w_p < NumLen[0])
-					Detail->NumInt[w_p++] = '0';
-			w_p = 0;
-			while (w_p < NumLen[1] && r_p < e_p)
+			else
 			{
-				if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
-					Detail->NumFloat[w_p++] = tempString[r_p++];
-				else
-					r_p++;
-			}
-			if (r_p < NumString.length())
-				while (w_p < NumLen[1])
+				//小于0的数
+				Detail->NumInt[0] = '0';
+				w_p = 0;
+				for (NumLen[0]++; NumLen[0] < 0; NumLen[0]++)
+				{
 					Detail->NumFloat[w_p++] = '0';
+				}
+				while (w_p < NumLen[1] && r_p < e_p)
+				{
+					if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
+						Detail->NumFloat[w_p++] = tempString[r_p++];
+					else
+						r_p++;
+				}
+			}
+
 		}
 		break;
 	case 30://正科学计数数(正指数)
@@ -197,36 +223,60 @@ void BigFigure::atoBF(std::string NumString)
 		Detail->NumInt = Detail->StringHead + Detail->IntAllocatedLen - NumLen[0];		//找到写入位置
 		while (tempString[e_p] != 'E' && tempString[e_p] != 'e') e_p++;					//找到E的位置
 		while ((tempString[r_p] == '0' || tempString[r_p] == '.') && r_p < e_p) r_p++;	//找到第一个有效数字
+		NumLen[0] -= r_p;
 		if (tempString[r_p] == 'E' || tempString[r_p] == 'e')
 		{
 			//数字为0
 			Detail->NumInt[0] = '0';
 			Detail->NumFloat[0] = 0;
+			break;
 		}
 		else {
 			//数字不为0,开始进行复制
-			w_p = 0;
-			while (w_p < NumLen[0] && r_p < e_p)
+			if (NumLen[0] > 0)
 			{
-				if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
-					Detail->NumInt[w_p++] = tempString[r_p++];
-				else
-					r_p++;
+				//大于0的数
+				w_p = 0;
+				while (w_p < NumLen[0] && r_p < e_p)
+				{
+					if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
+						Detail->NumInt[w_p++] = tempString[r_p++];
+					else
+						r_p++;
+				}
+				if (r_p < e_p)
+					while (w_p < NumLen[0])
+						Detail->NumInt[w_p++] = '0';
+				w_p = 0;
+				while (w_p < NumLen[1] && r_p < e_p)
+				{
+					if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
+						Detail->NumFloat[w_p++] = tempString[r_p++];
+					else
+						r_p++;
+				}
+				if (r_p < e_p)
+					while (w_p < NumLen[1])
+						Detail->NumFloat[w_p++] = '0';
 			}
-			if (r_p < NumString.length())
-				while (w_p < NumLen[0])
-					Detail->NumInt[w_p++] = '0';
-			w_p = 0;
-			while (w_p < NumLen[1] && r_p < e_p)
+			else
 			{
-				if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
-					Detail->NumFloat[w_p++] = tempString[r_p++];
-				else
-					r_p++;
-			}
-			if (r_p < NumString.length())
-				while (w_p < NumLen[1])
+				//小于0的数
+				Detail->NumInt[0] = '0';
+				w_p = 0;
+				for (NumLen[0]++; NumLen[0] < 0; NumLen[0]++)
+				{
 					Detail->NumFloat[w_p++] = '0';
+				}
+				while (w_p < NumLen[1] && r_p < e_p)
+				{
+					if (tempString[r_p] >= '0'&&tempString[r_p] <= '9')
+						Detail->NumFloat[w_p++] = tempString[r_p++];
+					else
+						r_p++;
+				}
+			}
+
 		}
 		break;
 
@@ -259,6 +309,7 @@ void BigFigure::printfBF()
 {
 	size_t unPrintZero = 0;		//记录还未显示出来的0的个数
 	size_t a = 0;
+	bool hasPoint = false;
 	if (Detail->Minus)
 		printf("-");
 	if (ScinotationShow)
@@ -279,15 +330,30 @@ void BigFigure::printfBF()
 			{
 				//发现全部项都为0,数字为0
 				skip = 0;
-				printf("0");
+				printf("0\n");
+				return;
 			}
 			else {
 				printf("%c", Detail->NumFloat[a]);
 				a++;
 			}
 			//显示剩余的应显示的位
-			//if (nowLen++ < ScinotationLen&&Detail->NumFloat[a] != 0)
-				//printf("%c", Detail->NumFloat[a++]);
+			while (!hasPoint&& nowLen < ScinotationLen&&Detail->NumFloat[a] != 0)
+			{
+				if (Detail->NumFloat[a] == '0')
+					unPrintZero += 1;
+				else
+				{
+					if (unPrintZero != 0)
+					{
+						printf("%s%0*d", hasPoint ? "" : ".", unPrintZero, 0);
+						unPrintZero = 0;
+					}
+					printf("%s%c", hasPoint ? "" : ".", Detail->NumFloat[a++]);
+					hasPoint = true;
+				}
+				nowLen++;
+			}
 			while (nowLen < ScinotationLen&&Detail->NumFloat[a] != 0)
 			{
 				if (Detail->NumFloat[a] == '0')
@@ -304,7 +370,11 @@ void BigFigure::printfBF()
 				nowLen++;
 			}
 			//用0补齐有效位数
+
+
 			if (ReserveZero) {
+				printf("%s", hasPoint ? "" : ".");
+				//hasPoint=0;
 				if (Detail->NumFloat[a] == 0)
 					for (; nowLen < ScinotationLen; nowLen++)
 						printf("0");
@@ -315,7 +385,6 @@ void BigFigure::printfBF()
 			//整数部分不为0,输出第一个有效位,接着输出第二个有效位
 			printf("%c", Detail->NumInt[a++]);
 			skip = 0;			//在这里skip用于存储在整数位后被移动到小数位的位数
-			bool hasPoint = false;
 
 			while (!hasPoint&&nowLen < ScinotationLen&&Detail->NumInt[a] != 0)	//等待需要小数点的地方
 			{
@@ -446,7 +515,7 @@ void BigFigure::printDetail()
 	printfBF();
 	return;
 }
-
+#endif
 
 
 /******************************************************************************************
@@ -454,8 +523,24 @@ void BigFigure::printDetail()
 *******************************************************************************************/
 
 
-
-
+NumStringDetail::NumStringDetail(std::string NumString) :
+	RadixMinus(0), ExpMinus(0), IntBeZero(0), Mode(0), IntLen(0), FloatLen(0), ExpLen(0), IntStart_p(0), FloatStart_p(0), ExpStart_p(0)
+{
+	this->NumString = NumString;
+	NumCheck(*this);
+}
+/*
+template <class T>
+std::string FormatToString(const T &Num)
+{
+	//std::istringstream istr;
+	//istr.str(Num);
+	//std::ostringstream oss;
+	//oss << Num;
+	//return istr.str(Num);
+	return "23";
+}
+*/
 
 
 
@@ -475,120 +560,196 @@ void BigFigure::printDetail()
   -31.负科学计数数(负指数)
   0.非数字
 */
-int NumCheck(std::string CheckString)
+bool NumCheck(NumStringDetail &NumDetail)
 {
-	size_t index_p;
-	size_t len = CheckString.length();
-	const char *tempString = CheckString.c_str();
-	bool hasPoint = false;			//记录是否有小数点
-	bool scinotation = false;		//记录是否以科学计数法进行标记
-	bool minus1 = false;			//记录数字是否有负号
-	bool minus2 = false;			//记录科学计数法时幂指数是否有负号
-	bool hasNumPre = false;			//记录在指定符号前方是否有数字
-	for (index_p = 0; index_p < len; index_p++)
-	{
-		if (tempString[index_p] >= '0'&&tempString[index_p] <= '9')
-			hasNumPre = true;
-		else if (tempString[index_p] == '.')
-		{
-			//.在字符串结尾时,.不起作用,字符串表示的还是整数
-			if (index_p != len - 1)
-			{
+	const char *tempString = NumDetail.NumString.c_str();
+	size_t StringLen = NumDetail.NumString.length();
+	bool HasNumPre = false;			//记录在指定符号前方是否有数字
+	bool HasPoint = false;			//记录是否有小数点
+	bool Scinotation = false;		//记录是否以科学计数法进行标记
+	bool IntBeZero = true;			//记录整数部分是否为0,用于决定浮点的下标是否等找到有效位再设置
+	size_t index_p;					//用此变量来记录所在字符串的位置,从而遍历字符串
 
-				if (hasPoint)
-				{
-					//已经有小数点,又遇到一个小数点,此时是非法数字
-					return 0;
-				}
-				else if (scinotation)
-				{
-					//在科学计数法的指数部分发现小数,此时的非法数字
-					return 0;
-				}
-				else
-					hasPoint = true;
-			}
-		}
-		else if (tempString[index_p] == 'E' || tempString[index_p] == 'e')
+	//开始遍历
+	for (index_p = 0; index_p < StringLen; index_p++)
+	{
+		//开始进行判断
+		if (tempString[index_p] > '0'&&tempString[index_p] <= '9')
 		{
-			if (hasNumPre&&index_p != len - 1) {
-				if (scinotation)
-				{
-					//在科学计数法的指数部分又出现一个指数,此时为非法数字
-					return 0;
-				}
-				else {
-					scinotation = true;
-					hasNumPre = false;
-				}
-			}
-			else
+			if (!HasNumPre)
 			{
-				//如果遇到E在字符串结尾,是一个非法数字
-				return 0;
+				if (Scinotation)
+					NumDetail.ExpStart_p = index_p;
+				else
+					if (HasPoint)
+					{
+						//小数点部分,设置小数点后字符串的指针
+						//NumDetail.FloatStart_p = index_p;
+					}
+					else if (IntBeZero)
+					{
+						//整数部分,设置第一个有效数字的字符串的指针
+						NumDetail.IntStart_p = index_p;
+						IntBeZero = false;
+					}
+
 			}
+			HasNumPre = true;
+			continue;
+		}
+		else if (tempString[index_p] == '0')
+		{
+			//if (HasPoint && !(IntBeZero || HasNumPre))
+			
+			if (HasPoint && !HasNumPre)
+			{
+				//整数不为0,且前面没有数字(当整数有有效数字时,小数点后的0不能省略)
+				HasNumPre = true;
+			}
+			continue;
 		}
 		else if (tempString[index_p] == '-')
 		{
-			if (!hasNumPre&&index_p != len - 1) {
-				if (scinotation)
-				{
-					//科学计数法状态时,已经读取到指数部分,遇到负号修改minus2
-					if (minus2)//判断重复负号的情况
-						return 0;
-					else
-						minus2 = true;
-				}
-				else {
-					if (minus1)//判断重复负号的情况
-						return 0;
-					else
-						minus1 = true;
-				}
-			}
-			else
+			if (HasNumPre)
 			{
-				//如果遇到负号在字符串结尾,也是非法数字
+				//将负号掺杂在数字中间,数字无效
+				NumDetail.Mode = 0;
 				return 0;
 			}
+			if (Scinotation)
+			{
+				if (NumDetail.ExpMinus)
+				{
+					//在指数部分已有负号时(存在两个负号),数字无效
+					NumDetail.Mode = 0;
+					return 0;
+				}
+				else NumDetail.ExpMinus = 1;
+			}
+			else {
+				//处理底数部分
+				if (NumDetail.RadixMinus)
+				{
+					//在底数部分已有负号时(存在两个负号),数字无效
+					NumDetail.Mode = 0;
+					return 0;
+				}
+				else NumDetail.RadixMinus = 1;
+			}
+			continue;
+		}
+		else if (tempString[index_p] == '.')
+		{
+			if (Scinotation) {
+				//指数部分有小数点,数字无效
+				NumDetail.Mode = 0;
+				return 0;
+			}
+			else {
+				if (!HasPoint)
+				{
+					//保存整数的长度
+					NumDetail.IntLen = index_p - NumDetail.IntStart_p;
+					if (!HasNumPre)
+					{
+						IntBeZero = true;
+						NumDetail.IntLen = 0;
+					}
+					NumDetail.FloatStart_p = index_p + 1;
+					HasPoint = true;
+					HasNumPre = false;
+				}
+				else
+				{
+					//发现两个小数点,数字无效
+					NumDetail.Mode = 0;
+					return 0;
+				}
+			}
+			continue;
+		}
+		else if (tempString[index_p] == 'E' || tempString[index_p] == 'e')
+		{
+			if (Scinotation)
+			{
+				//一个数字出现两个E,数字错误
+				NumDetail.Mode = 0;
+				return 0;
+			}
+			else {
+				if (HasPoint)
+				{
+					//底数为小数
+					//保存小数的长度
+					if (HasNumPre)
+						NumDetail.FloatLen = index_p - NumDetail.FloatStart_p;
+					else
+						HasPoint = false;
+				}
+				else
+				{
+					//在底数为整数
+					//保存整数的长度
+					NumDetail.IntLen = index_p - NumDetail.IntStart_p;
+				}
+				Scinotation = true;
+				HasNumPre = false;
+			}
+			continue;
+		}
+		else if (tempString[index_p] == '+')
+		{
+			if (HasNumPre)
+			{
+				//将正号掺杂在数字中间,数字无效
+				NumDetail.Mode = 0;
+				return 0;
+			}
+			continue;
 		}
 		else {
-			//发现其他字符,非法数字
+			//发现其他字符,数字非法
+			NumDetail.Mode = 0;
 			return 0;
 		}
 	}
-	//如果是正确的数字,则可以通过这个for的验证,接下来判断数字的类型
-	if (minus1)
+
+
+	//如果是正确的数字, 则可以通过这个for的验证
+	//NumDetail.ExpMinus = Expminus;
+	//NumDetail.RadixMinus = Radixminus;
+	NumDetail.IntBeZero = IntBeZero;
+	if (Scinotation)
 	{
-		//负数
-		if (scinotation) {
-			if (minus2)
-				return -31;
-			else
-				return -30;
-		}
-		else if (hasPoint)
-			return -2;
-		else
-			return -1;
+		NumDetail.Mode = 2;		//初始化为2,Mode将为3,4
+		NumDetail.ExpLen = index_p - NumDetail.ExpStart_p;
 	}
 	else
 	{
-		//正数
-		if (scinotation)
-		{
-			if (minus2)
-				return 31;
-			else
-				return 30;
-		}
-		else if (hasPoint)
-			return 2;
-		else
-			return 1;
+		NumDetail.Mode = 0;		//初始化为0,Mode将为1,2
+		NumDetail.FloatLen = index_p - NumDetail.FloatStart_p;
 	}
-}
 
+	if (HasPoint)
+	{
+		if (NumDetail.FloatLen)
+		{
+			NumDetail.Mode += 2;
+		}
+		else
+		{
+			NumDetail.Mode += 1;
+		}
+
+	}
+	else {
+		NumDetail.Mode += 1;
+		NumDetail.IntLen = index_p - NumDetail.IntStart_p;
+	}
+
+	return 1;
+}
+#if 0
 //计算一个已知类型的字符串的整数部分和小数部分的长度,并通过result返回
 /*
 result[0]表示的是整数的位数
@@ -596,11 +757,15 @@ result[1]表示的是浮点数的位数
 返回值0 失败
 返回值1 成功(整数)
 返回值2 成功(小数)
+
+有严重bug,待完整测试
+
 */
 int BitCount(std::string NumString, int NumType, int result[2])
 {
 	const char* tempString = NumString.c_str();
 	size_t len, len2;
+	bool hasNumPre = false;			//记录在指定符号前方是否有数字
 	int exponent;			//用于科学计数法的计算位数,保存科学计数法的指数部分
 	switch (NumType)
 	{
@@ -644,7 +809,7 @@ int BitCount(std::string NumString, int NumType, int result[2])
 	case 31:	//正小数(负指数)
 		len2 = 0;
 		while (tempString[len2] != 'E' && tempString[len2] != 'e')len2++;
-		exponent = atoi(tempString + len2 + 1)*-1;
+		exponent = atoi(tempString + len2 + 2);
 		len = 0;
 		while (tempString[len] != '.'&&len < len2)len++;		//找到小数点所在的位置
 		result[0] = len - exponent;
@@ -656,16 +821,31 @@ int BitCount(std::string NumString, int NumType, int result[2])
 			result[0] = 1;
 		return 2;
 	case -30:	//负小数(正指数)
+		/*
+		缺少支持-0.01E2这种情况
+		*/
 		len2 = 0;
-		while (tempString[len2] != 'E' && tempString[len2] != 'e')len2++;
+		while (tempString[len2] != 'E' && tempString[len2] != 'e') len2++;
 		exponent = atoi(tempString + len2 + 1);
-		len = 0;
-		while (tempString[len] != '.'&&len < len2)len++;		//找到小数点所在的位置
-		result[0] = len - 1 + exponent;							//多减去一个负号
+		len = 1;
+		hasNumPre = false;
+		while (tempString[len] != '.'&&len < len2)
+		{
+			if (!hasNumPre&&tempString[len] != '0')
+				hasNumPre = true;
+			len++;			//找到小数点所在的位置
+		}
+		if (!hasNumPre)
+		{
+			while (tempString[len] != '0'&&len < len2)len--;
+			len--;
+		}
+		result[0] = len - 1 + exponent;								//多减去一个负号
+
 		if (len == len2)
-			result[1] = len2 - len - exponent;
+			result[1] = len2 - len - 1 - exponent;
 		else
-			result[1] = len2 - len - 1 - exponent;				//多减去一个小数点
+			result[1] = len2 - len - 2 - exponent;					//多减去一个小数点
 		if (result[1] < 0)
 		{
 			result[1] = 0;
@@ -704,3 +884,25 @@ int BitCount_check(std::string NumString, int result[2])
 {
 	return BitCount(NumString, NumCheck(NumString), result);
 }
+
+#endif
+
+std::string FormatToString(double Num)
+{
+	return std::string();
+}
+
+/*
+template<class T>
+
+void to_string(string & result, const T& t)
+
+{
+
+	ostringstream oss;//创建一个流
+
+	oss << t;//把值传递如流中
+
+	result = oss.str();//获取转换后的字符转并将其写入result
+}
+*/

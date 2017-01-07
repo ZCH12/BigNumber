@@ -42,6 +42,27 @@ public:
 	//void GetMessage();       //输出错误信息
 };
 
+//用于存储字符串数字字符串的信息
+class NumStringDetail
+{
+private:
+	typedef char byte;
+	byte RadixMinus : 1;	//底数部分是否有负号
+	byte ExpMinus : 1;		//指数部分是否有负号
+	byte IntBeZero : 1;		//整数部分是否为0,决定是否需要在浮点数中寻找有效位
+	byte Mode : 4;			//表示的数字的类型
+	size_t IntLen;			//整数部分的长度
+	size_t IntStart_p;		//整数的起始下标
+	size_t FloatLen;		//浮点数部分的长度
+	size_t FloatStart_p;	//浮点数的起始下标
+	size_t ExpLen;			//指数部分的长度
+	size_t ExpStart_p;		//指数的起始下标
+	std::string NumString;	//保存的字符串信息
+public:
+	NumStringDetail::NumStringDetail(std::string NumString);
+	friend bool NumCheck(NumStringDetail &NumDetail);
+	//NumStringDetail(double Number);
+};
 
 class BigFigure
 {
@@ -57,7 +78,6 @@ private:
 		char *NumInt;           //可输出的整数部分的字符串的首地址
 		char *NumFloat;         //可输出的浮点数部分的字符串的首地址
 		char *StringHead;       //保存申请的字符串空间的首指针
-
 	} *Detail;
 	//void FreeDetail();
 public:
@@ -69,8 +89,8 @@ public:
 	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);
 	//void core_FloatAdd();
 	//void core_FloatAdd();
-	void atoBF(std::string NumString);
-	void printfBF();
+	//void atoBF(std::string NumString);
+	//void printfBF();
 	void printDetail();
 
 };
@@ -80,8 +100,11 @@ typedef BigFigure BF;
 /*
 全局基础函数
 */
-int NumCheck(std::string CheckString);							//检查字符串是否为合法数字,并返回数字的类型
+bool NumCheck(NumStringDetail &NumDetail);						//检查字符串是否为合法数字,并返回数字的类型
 int BitCount(std::string NumString, int NumType, int result[2]);//计算数字的整数位的长度和小数位的长度
 int BitCount_check(std::string NumString, int result[2]);		//检查数字的合法性并计算整数位和小数位的长度
+//template <class T> std::string FormatToString(const T& Num);
+
+std::string FormatToString(double Num);
 
 #endif

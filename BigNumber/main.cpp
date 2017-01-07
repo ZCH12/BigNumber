@@ -8,7 +8,7 @@
 
 #include <iostream>
 #include "BigNumber.h"
-
+/*
 void test1(std::string testData)
 {
 	int re[2] = { 0 };
@@ -57,7 +57,7 @@ void test1(std::string testData)
 	ScinotationLen = 15;
 	bf.printfBF();
 }
-
+*/
 /*
 测试数据
 123456789 正整数
@@ -84,7 +84,7 @@ void test1(std::string testData)
 */
 
 int main(int argc, const char * argv[]) {
-	
+
 	//test1("123456789");
 	//test1("10012345678901234567890");
 	//test1("-123456789");
@@ -95,19 +95,24 @@ int main(int argc, const char * argv[]) {
 
 	//test1("223123E20");
 	//test1("-6568.55560000E3");
-	test1("0E46");
+	//test1("-0.01E2");
+
+
+
 	/*
 	int re[2] = { 0 };
 	BF bf(100, 100);
-	bf.atoBF("1234567.012345600");
+	bf.atoBF("0.001E2");
 	ScinotationShow = true;
-	ReserveZero = false;
+	ReserveZero = true;
 	ScinotationLen = 16;
 	bf.printfBF();
 	*/
 	//std::cout << BitCount_check("1230.1E-4", re)<<std::endl;
 	//std::cout << re[0] << "   " << re[1] << std::endl;
 	//std::cout << NumCheck("45.789") << std::endl;
+	NumStringDetail nn("-00.0000E-5557");
+	//FormatToString();
 	system("pause");
-    return 0;
+	return 0;
 }
