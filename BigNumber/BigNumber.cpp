@@ -13,7 +13,8 @@
 //控制显示方式的变量
 bool ReserveZero = true;			//保留小数后的0
 bool ScinotationShow = false;		//不以科学计数法显示数字
-bool ConfirmWontLossAccuracy = true;	//确保不截断小数的有效位(关闭之后如果赋值时小数位太多,则会省略多出的部分;如果开启,则会抛出异常)
+bool ConfirmWontLossAccuracy = true;//确保不截断小数的有效位(关闭之后如果赋值时小数位太多,则会省略多出的部分;如果开启,则会抛出异常)
+bool ConfirmWontLossHighBit = true;	//确保不丢失整数的高位(如果发生溢出时),如果为true,则发生溢出时会抛出异常,如果为false,则如果溢出则舍弃高位
 size_t ScinotationLen = 5;			//科学计数法时有效位数为5位
 
 
@@ -48,11 +49,12 @@ BigFigure::BigFigure(size_t IntSize, size_t FloatSize) throw(...)
 		Detail->IntAllocatedLen = IntSize;
 		Detail->ReferCount = 1;
 		Detail->IntLen = 1;						//初始化的长度为0
-		Detail->Minus = 0;						//
+		Detail->Minus = 0;						//为无负号
 		try {
 			Detail->StringHead = new char[AllocatedMem]();
-			Detail->StringHead[IntSize - 1] = '0';			//初始化数字为0
-			Detail->NumInt = Detail->StringHead + IntSize - 1;
+			Detail->IntTail = Detail->StringHead + IntSize;
+			Detail->NumInt = Detail->IntTail - 1;
+			Detail->NumInt[0] = '0';	//初始化数字为0
 
 			if (FloatSize > 0) {
 				Detail->NumFloat = Detail->StringHead + IntSize + 1;
@@ -493,6 +495,8 @@ void BigFigure::printfBF()
 	}
 }
 
+
+
 //打印该对象的详细信息
 /*
 ##未完成
@@ -522,6 +526,206 @@ void BigFigure::printDetail()
 重载函数
 *******************************************************************************************/
 
+//将字符串写入BF中
+void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
+{
+	int temp;
+	char *tempStr, *SourceStr;
+	size_t index_p, size;
+	int skip;
+	int expon;					//科学计数法的指数部分
+
+	Detail->Minus = (bool)NumStringDetail.RadixMinus;
+
+	switch (NumStringDetail.Mode)
+	{
+	case 1://整数
+	case 2://小数
+		Detail->IntLen = NumStringDetail.IntLen;
+		if (Detail->IntAllocatedLen >= NumStringDetail.IntLen)
+		{
+			//正常情况下
+			Detail->NumInt = Detail->IntTail - NumStringDetail.IntLen;
+			Detail->IntLen = NumStringDetail.IntLen;
+			strncpy(Detail->NumInt, NumStringDetail.NumString.c_str() + NumStringDetail.IntStart_p, NumStringDetail.IntLen);
+		}
+		else
+		{
+			//如果发生溢出
+			if (ConfirmWontLossHighBit)
+				throw BFException(ERR_NUMBERTOOBIG, "对于目标对象,传入的数据太大,该对象无法容纳");
+			else
+			{
+				Detail->NumInt = Detail->StringHead;
+				Detail->IntLen = Detail->IntAllocatedLen;
+				temp = Detail->IntAllocatedLen - NumStringDetail.IntLen;
+				strncpy(Detail->NumInt, NumStringDetail.NumString.c_str() + NumStringDetail.IntStart_p - temp, Detail->IntAllocatedLen);
+			}
+		}
+
+		if (NumStringDetail.Mode == 1)
+		{
+			Detail->NumFloat[0] = 0;
+			break;
+		}
+		//以下小数部分的处理
+		if (NumStringDetail.FloatLen <= Detail->Accuracy)
+			strncpy(Detail->NumFloat, NumStringDetail.NumString.c_str() + NumStringDetail.FloatStart_p, NumStringDetail.FloatLen);
+		else
+		{
+			if (ConfirmWontLossAccuracy)
+				throw BFException(ERR_MAYACCURACYLOSS, "写入的有效位数多于目标对象的容量,数据可能丢失");
+			else
+				strncpy(Detail->NumFloat, NumStringDetail.NumString.c_str() + NumStringDetail.FloatStart_p, Detail->Accuracy);
+		}
+		break;
+	case 3://科学计数法表示的以整数为底数的数字
+		break;
+	case 4://科学计数法表示的以小数为底数的数字
+		tempStr = new char[NumStringDetail.NumString.length()]();			//临时存放有效位的字符串
+		SourceStr = (char*)NumStringDetail.NumString.c_str() + NumStringDetail.FloatStart_p;
+		index_p = 0;
+
+		//取出有效位
+		if (!NumStringDetail.IntBeZero)
+		{
+			strncpy(tempStr, NumStringDetail.NumString.c_str() + NumStringDetail.IntStart_p, NumStringDetail.IntLen);	//复制整数部分的有效数字
+			index_p = NumStringDetail.IntLen;
+			skip = index_p - 1;
+			strncpy(tempStr + index_p, SourceStr, NumStringDetail.FloatLen);	//复制小数部分的有效数字
+			index_p += NumStringDetail.FloatLen;
+			while (index_p != 0 && tempStr[index_p] == '0')tempStr[index_p--] = 0;//去除末尾的0
+		}
+		else {
+			index_p = NumStringDetail.FloatLen;
+			skip = index_p;
+			while (*(SourceStr++) == '0')index_p--;			//跳过数字前边的0
+			skip = ~(skip - index_p + 1) + 1;				//取得跳过的有效位的位数
+			strncpy(tempStr, SourceStr, index_p);			//复制有效数字
+			while (index_p != 0 && tempStr[index_p] == '0')tempStr[index_p--] = 0;//去除末尾的0
+		}
+		size = index_p + 1;
+		expon = atoi(NumStringDetail.NumString.c_str() + NumStringDetail.ExpStart_p);
+		if (NumStringDetail.ExpMinus)
+		{
+			//指数为负数
+			expon = ~expon + 1 + skip;
+		}
+		else
+		{
+			//指数为正数
+			expon += skip;
+		}
+		if (expon > 0)
+		{
+			if (Detail->IntAllocatedLen > expon)
+			{
+				//空间足够存放整数数字
+				Detail->IntLen = expon + 1;
+				if (expon >= size)
+				{
+					//如果指数大于有效位数的大小,此时小数点后一定为空,
+					//不够的位要用0补齐
+					Detail->NumInt = Detail->IntTail - expon;
+
+					strcpy(Detail->NumInt, tempStr);								//复制有效位
+					index_p = size;
+					memset(Detail->NumInt + index_p - 1, '0', Detail->IntLen - size - 1);	//空位用0填充
+					Detail->NumFloat[0] = 0;
+				}
+				else
+				{
+					//指数大小小于有效位数,则只在整数部分输出expon个有效数字,其余的输出到小数位去
+					Detail->NumInt = Detail->IntTail - expon;
+					strncpy(Detail->NumInt, tempStr, expon);			//写入整数位
+					if (size - expon <= Detail->Accuracy)
+					{
+						//小数位足够存放
+						strcpy(Detail->NumFloat, tempStr + expon);		//写入小数位,足够存放,直接复制
+					}
+					else
+					{
+						//小数位不足以存放,则考虑截断
+						if (ConfirmWontLossAccuracy)
+						{
+							//确保不截断开关开启,抛出异常
+							throw BFException(ERR_MAYACCURACYLOSS, "对象分配的内存太小,不足以存储所以的有效位,可能会损失精度");
+						}
+						else
+						{
+							//进行截断处理
+							strncpy(Detail->NumFloat, tempStr + expon, Detail->Accuracy);	//写入小数位,不够存放,进行截断
+						}
+					}
+				}
+			}
+			else
+			{
+				//空间不足以存放整数数据
+				if (ConfirmWontLossHighBit)
+					throw BFException(ERR_NUMBERTOOBIG, "数字太大,该对象无法存下这个数");
+				else
+				{
+					//截取整数低位的数据存入
+					Detail->NumInt = Detail->StringHead;
+					Detail->IntLen = Detail->IntAllocatedLen;
+					temp = expon - Detail->IntAllocatedLen;			//忽略的有效位的偏移量
+					strcpy(Detail->NumInt, tempStr + temp);
+					memset(Detail->NumInt + size - temp - 1, '0', Detail->IntAllocatedLen - (size - temp));
+				}
+			}
+		}
+		else if (expon < 0)
+		{
+			Detail->NumInt = Detail->IntTail - 1;
+			Detail->NumInt[0] = '0';
+			Detail->IntLen = 1;
+
+			memset(Detail->NumFloat, '0', ~expon);
+			index_p = ~expon;
+			if (Detail->Accuracy >= size + index_p)
+			{
+				//精确度大于有效位数,能够完全存下
+				strcpy(Detail->NumFloat + index_p, tempStr);
+			}
+			else {
+				//小数位不够,有效位会被截断
+				if (ConfirmWontLossAccuracy)
+					throw BFException(ERR_MAYACCURACYLOSS, "有效位数不够,可能丢失精度");
+				else
+					strncpy(Detail->NumFloat + index_p, tempStr, Detail->Accuracy);
+			}
+		}
+		else
+		{
+			//指数等于0的情况
+			Detail->NumInt = Detail->IntTail - 1;
+			Detail->NumInt[0] = tempStr[0];
+			Detail->IntLen = 1;
+
+			if (Detail->Accuracy >= size-1)
+			{
+				//精确度大于有效位数,能够完全存下
+				strcpy(Detail->NumFloat, tempStr+1);
+			}
+			else {
+				//小数位不够,有效位会被截断
+				if (ConfirmWontLossAccuracy)
+					throw BFException(ERR_MAYACCURACYLOSS, "有效位数不够,可能丢失精度");
+				else
+					strncpy(Detail->NumFloat, tempStr+1, Detail->Accuracy);
+			}
+		}
+
+
+		delete[] tempStr;
+		break;
+	case 0:
+	default:
+		throw BFException(ERR_ILLEGALNUMBER, "不是一个合法的数字");
+		break;
+	}
+}
 
 NumStringDetail::NumStringDetail(std::string NumString) :
 	RadixMinus(0), ExpMinus(0), IntBeZero(0), Mode(0), IntLen(0), FloatLen(0), ExpLen(0), IntStart_p(0), FloatStart_p(0), ExpStart_p(0)
@@ -529,35 +733,17 @@ NumStringDetail::NumStringDetail(std::string NumString) :
 	this->NumString = NumString;
 	NumCheck(*this);
 }
-/*
-template <class T>
-std::string FormatToString(const T &Num)
-{
-	//std::istringstream istr;
-	//istr.str(Num);
-	//std::ostringstream oss;
-	//oss << Num;
-	//return istr.str(Num);
-	return "23";
-}
-*/
-
-
 
 /******************************************************************************************
 基础函数
 *******************************************************************************************/
-//检查字符串是否为数字,并且判断字符串表示的是整数还是小数
+//检查字符串是否为数字,并且判断字符串表示的是整数还是小数,并且输出长度信息
 /*
 返回值代表的含义如下:
-  1.正整数
-  -1.负整数
-  2.正小数
-  -2.负小数
-  30.正科学计数数(正指数)
-  31.正科学计数数(负指数)
-  -30.负科学计数数(正指数)
-  -31.负科学计数数(负指数)
+  1.整数
+  2.小数
+  3.底数为整数的科学计数法表示的数
+  4.底数为小数的科学计数法表示的数
   0.非数字
 */
 bool NumCheck(NumStringDetail &NumDetail)
@@ -600,7 +786,7 @@ bool NumCheck(NumStringDetail &NumDetail)
 		else if (tempString[index_p] == '0')
 		{
 			//if (HasPoint && !(IntBeZero || HasNumPre))
-			
+
 			if (HasPoint && !HasNumPre)
 			{
 				//整数不为0,且前面没有数字(当整数有有效数字时,小数点后的0不能省略)
@@ -625,6 +811,7 @@ bool NumCheck(NumStringDetail &NumDetail)
 					return 0;
 				}
 				else NumDetail.ExpMinus = 1;
+				NumDetail.ExpStart_p = index_p + 1;
 			}
 			else {
 				//处理底数部分
@@ -635,6 +822,7 @@ bool NumCheck(NumStringDetail &NumDetail)
 					return 0;
 				}
 				else NumDetail.RadixMinus = 1;
+				NumDetail.IntStart_p = index_p + 1;
 			}
 			continue;
 		}
@@ -702,6 +890,7 @@ bool NumCheck(NumStringDetail &NumDetail)
 			if (HasNumPre)
 			{
 				//将正号掺杂在数字中间,数字无效
+				NumDetail.IntStart_p = index_p + 1;
 				NumDetail.Mode = 0;
 				return 0;
 			}
@@ -716,8 +905,6 @@ bool NumCheck(NumStringDetail &NumDetail)
 
 
 	//如果是正确的数字, 则可以通过这个for的验证
-	//NumDetail.ExpMinus = Expminus;
-	//NumDetail.RadixMinus = Radixminus;
 	NumDetail.IntBeZero = IntBeZero;
 	if (Scinotation)
 	{
@@ -749,6 +936,10 @@ bool NumCheck(NumStringDetail &NumDetail)
 
 	return 1;
 }
+
+
+
+
 #if 0
 //计算一个已知类型的字符串的整数部分和小数部分的长度,并通过result返回
 /*
@@ -889,8 +1080,25 @@ int BitCount_check(std::string NumString, int result[2])
 
 std::string FormatToString(double Num)
 {
-	return std::string();
+	char TempString[2500];
+	sprintf(TempString, "%lf", Num);
+	return std::string(TempString);
 }
+
+std::string FormatToString(long Num)
+{
+	char TempString[20];
+	sprintf(TempString, "%ld", Num);
+	return std::string(TempString);
+}
+
+std::string FormatToString(int Num)
+{
+	char TempString[20];
+	sprintf(TempString, "%d", Num);
+	return std::string(TempString);
+}
+
 
 /*
 template<class T>

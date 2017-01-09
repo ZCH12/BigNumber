@@ -111,8 +111,18 @@ int main(int argc, const char * argv[]) {
 	//std::cout << BitCount_check("1230.1E-4", re)<<std::endl;
 	//std::cout << re[0] << "   " << re[1] << std::endl;
 	//std::cout << NumCheck("45.789") << std::endl;
-	NumStringDetail nn("-00.0000E-5557");
+	ConfirmWontLossAccuracy = true;
+	ConfirmWontLossHighBit = false;
+
+	BF bf(40,40);
+	//NumStringDetail n("123456.0000000000000009E5");
+	//bf.toBF(NumStringDetail("-123456789000.0000000000000000E5"));
+	bf.toBF(
+		NumStringDetail("-123456.000000000000090E-5")
+	);
+	//NumStringDetail n1(FormatToString(-45.0000000001));
 	//FormatToString();
+
 	system("pause");
 	return 0;
 }

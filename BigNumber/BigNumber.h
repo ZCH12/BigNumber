@@ -12,16 +12,15 @@
 //3.改变对象（重新分配）
 
 //错误值的定义
-#define ERR_UNKNOWEXCEPTION 0
-#define ERR_ARRAYINDEXOUTOFBOUNDSEXCEPTION 1
-#define ERR_MEMORYALLOCATEDEXCEPTION 2
-#define ERR_NULLPOINTEXCEPTION 3
-#define ERR_ILLEGALNUMBER 4
-#define ERR_DIVISORCANNOTBEZERO 5
-#define ERR_ILLEGALPARAM 6
-#define ERR_NUMBERTOOBIG 7
-#define ERR_MAYACCURACYLOSS 8
-
+#define ERR_UNKNOWEXCEPTION 0				//未知的错误
+#define ERR_ARRAYINDEXOUTOFBOUNDSEXCEPTION 1//数组下标越界
+#define ERR_MEMORYALLOCATEDEXCEPTION 2		//内存分配错误
+#define ERR_NULLPOINTEXCEPTION 3			//空指针
+#define ERR_ILLEGALNUMBER 4					//非法的数字
+#define ERR_DIVISORCANNOTBEZERO 5			//除数不能为0
+#define ERR_ILLEGALPARAM 6					//参数有误
+#define ERR_NUMBERTOOBIG 7					//源数据大小大于目标容量
+#define ERR_MAYACCURACYLOSS 8				//可能丢失精度(小数点后的位被舍弃,并且ConfirmWontLossAccuracy==true)时才抛出
 //编译开关
 
 
@@ -30,6 +29,7 @@
 extern bool ReserveZero;			//是否保留小数点后的0
 extern bool ScinotationShow;		//是否以科学计数法显示数字
 extern bool ConfirmWontLossAccuracy;//确保不截断小数的有效位(关闭之后如果赋值时小数位太多,则会省略多出的部分;如果开启,则会抛出异常)
+extern bool ConfirmWontLossHighBit;	//确保不丢失整数的高位(如果发生溢出时),如果为true,则发生溢出时会抛出异常,如果为false,则如果溢出则舍弃高位
 extern size_t ScinotationLen;		//用小数点表示时的有效位数
 
 class BFException
@@ -61,6 +61,7 @@ private:
 public:
 	NumStringDetail::NumStringDetail(std::string NumString);
 	friend bool NumCheck(NumStringDetail &NumDetail);
+	friend class BigFigure;
 	//NumStringDetail(double Number);
 };
 
@@ -76,6 +77,7 @@ private:
 		size_t IntAllocatedLen;	//整数部分的已分配内存长度
 		bool Minus;             //表示是否为负数,如果为负数,则该值为1
 		char *NumInt;           //可输出的整数部分的字符串的首地址
+		char *IntTail;			//整数部分的尾地址(用于快速计算写入位置)(处于小数点所在的位置)
 		char *NumFloat;         //可输出的浮点数部分的字符串的首地址
 		char *StringHead;       //保存申请的字符串空间的首指针
 	} *Detail;
@@ -89,7 +91,7 @@ public:
 	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);
 	//void core_FloatAdd();
 	//void core_FloatAdd();
-	//void atoBF(std::string NumString);
+	void toBF(NumStringDetail &NumStringDetail);
 	//void printfBF();
 	void printDetail();
 
@@ -103,8 +105,8 @@ typedef BigFigure BF;
 bool NumCheck(NumStringDetail &NumDetail);						//检查字符串是否为合法数字,并返回数字的类型
 int BitCount(std::string NumString, int NumType, int result[2]);//计算数字的整数位的长度和小数位的长度
 int BitCount_check(std::string NumString, int result[2]);		//检查数字的合法性并计算整数位和小数位的长度
-//template <class T> std::string FormatToString(const T& Num);
 
 std::string FormatToString(double Num);
-
+std::string FormatToString(long Num);
+std::string FormatToString(int Num);
 #endif
