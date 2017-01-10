@@ -119,10 +119,10 @@ int main(int argc, const char * argv[]) {
 	//bf.toBF(NumStringDetail("-123456789000.0000000000000000E5"));
 #if 1
 	bf.toBF(
-		NumStringDetail("1889000.010000000002E5")
+		NumStringDetail("-1889001000.333E-2")
 	);
 #else
-	NumStringDetail n("1889000.01E5");
+	NumStringDetail n("-1889001000");
 #endif
 	//NumStringDetail n1(FormatToString(-45.0000000001));
 	//FormatToString();

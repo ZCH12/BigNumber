@@ -644,7 +644,7 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 			if (NumStringDetail.ExpMinus)
 			{
 				//指数为负数
-				expon = ~expon + 2 + skip;
+				expon = ~expon + 1 + skip;
 			}
 			else
 			{
@@ -859,7 +859,8 @@ bool NumCheck(NumStringDetail &NumDetail)
 					NumDetail.Mode = 0;
 					return 0;
 				}
-				else NumDetail.ExpMinus = 1;
+				else 
+					NumDetail.ExpMinus = 1;
 				NumDetail.ExpStart_p = index_p + 1;
 			}
 			else {
@@ -870,7 +871,8 @@ bool NumCheck(NumStringDetail &NumDetail)
 					NumDetail.Mode = 0;
 					return 0;
 				}
-				else NumDetail.RadixMinus = 1;
+				else 
+					NumDetail.RadixMinus = 1;
 				NumDetail.IntStart_p = index_p + 1;
 			}
 			continue;
@@ -969,7 +971,10 @@ bool NumCheck(NumStringDetail &NumDetail)
 	else
 	{
 		NumDetail.Mode = 0;		//初始化为0,Mode将为1,2
+		if (HasPoint)
 		NumDetail.FloatLen = index_p - NumDetail.FloatStart_p;
+		else
+			NumDetail.IntLen = index_p - NumDetail.IntStart_p;
 	}
 
 	if (HasPoint)
