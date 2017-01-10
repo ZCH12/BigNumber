@@ -76,6 +76,7 @@ private:
 		size_t IntLen;			//整数部分数字的有效位数(实际长度)
 		size_t IntAllocatedLen;	//整数部分的已分配内存长度
 		bool Minus;             //表示是否为负数,如果为负数,则该值为1
+		bool Illage;			//表示是否为非法数字,如果是非法数字,则此值为true
 		char *NumInt;           //可输出的整数部分的字符串的首地址
 		char *IntTail;			//整数部分的尾地址(用于快速计算写入位置)(处于小数点所在的位置)
 		char *NumFloat;         //可输出的浮点数部分的字符串的首地址

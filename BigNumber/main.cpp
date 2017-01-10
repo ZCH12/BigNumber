@@ -117,9 +117,13 @@ int main(int argc, const char * argv[]) {
 	BF bf(40,40);
 	//NumStringDetail n("123456.0000000000000009E5");
 	//bf.toBF(NumStringDetail("-123456789000.0000000000000000E5"));
+#if 1
 	bf.toBF(
-		NumStringDetail("-123456.000000000000090E-5")
+		NumStringDetail("1889000.010000000002E5")
 	);
+#else
+	NumStringDetail n("1889000.01E5");
+#endif
 	//NumStringDetail n1(FormatToString(-45.0000000001));
 	//FormatToString();
 
