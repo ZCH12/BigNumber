@@ -59,7 +59,10 @@ private:
 	size_t ExpStart_p;		//指数的起始下标
 	std::string NumString;	//保存的字符串信息
 public:
-	NumStringDetail::NumStringDetail(std::string NumString);
+	NumStringDetail(std::string NumString);
+	NumStringDetail(double Num);
+	NumStringDetail(long Num);
+	NumStringDetail(int Num);
 	friend bool NumCheck(NumStringDetail &NumDetail);
 	friend class BigFigure;
 	//NumStringDetail(double Number);
@@ -92,7 +95,7 @@ public:
 	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);
 	//void core_FloatAdd();
 	//void core_FloatAdd();
-	void toBF(NumStringDetail &NumStringDetail);
+	void toBF(NumStringDetail &NumStringDetail);						//将其他数据类型写入到当前对象中
 	//void printfBF();
 	void printDetail();
 
@@ -104,10 +107,4 @@ typedef BigFigure BF;
 全局基础函数
 */
 bool NumCheck(NumStringDetail &NumDetail);						//检查字符串是否为合法数字,并返回数字的类型
-int BitCount(std::string NumString, int NumType, int result[2]);//计算数字的整数位的长度和小数位的长度
-int BitCount_check(std::string NumString, int result[2]);		//检查数字的合法性并计算整数位和小数位的长度
-
-std::string FormatToString(double Num);
-std::string FormatToString(long Num);
-std::string FormatToString(int Num);
 #endif

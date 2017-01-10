@@ -7,6 +7,7 @@
 //
 
 #include <iostream>
+#include <cstdlib>
 #include "BigNumber.h"
 /*
 void test1(std::string testData)
@@ -111,22 +112,34 @@ int main(int argc, const char * argv[]) {
 	//std::cout << BitCount_check("1230.1E-4", re)<<std::endl;
 	//std::cout << re[0] << "   " << re[1] << std::endl;
 	//std::cout << NumCheck("45.789") << std::endl;
-	ConfirmWontLossAccuracy = true;
+	ConfirmWontLossAccuracy = false;
 	ConfirmWontLossHighBit = false;
 
-	BF bf(40,40);
+	BF bf(40,0);
+
+	char a[1000];
+
+	_gcvt(56e300, 16, a);
+
+	printf("%s", a);
+	//1.4327677766926336
+
+	//0x00affe8c {125.50000000000000}
+
+	//605f40
 	//NumStringDetail n("123456.0000000000000009E5");
-	//bf.toBF(NumStringDetail("-123456789000.0000000000000000E5"));
-#if 1
+	bf.toBF(NumStringDetail(456.22323232323e10));
+#if 0
 	bf.toBF(
 		NumStringDetail("-1889001000.333E-2")
 	);
 #else
-	NumStringDetail n("-1889001000");
+	//NumStringDetail n("-1889001000");
 #endif
 	//NumStringDetail n1(FormatToString(-45.0000000001));
 	//FormatToString();
 
+	//1.2075877953241088
 	system("pause");
 	return 0;
 }
