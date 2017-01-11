@@ -65,12 +65,6 @@ NumStringDetail::NumStringDetail(int Num) :
 	NumCheck(*this);
 }
 
-
-
-BigFigure::BigFigure()
-{
-
-}
 //以指定大小初始化一个BigFigure,初始化后的值为0
 BigFigure::BigFigure(size_t IntSize, size_t FloatSize) throw(...)
 {
@@ -117,14 +111,25 @@ BigFigure::BigFigure(size_t IntSize, size_t FloatSize) throw(...)
 	}
 }
 
+//复制构造函数
 BigFigure::BigFigure(const BigFigure& Base)
 {
-
+	printf("进行了复制\n");
+	this->Detail = Base.Detail;
+	this->Detail->ReferCount++;
 }
 
 BigFigure::~BigFigure()
 {
-
+	Detail->ReferCount--;
+	if (!Detail->ReferCount)
+	{
+		//释放Detail所占的内存
+		delete[] Detail->StringHead;
+		delete Detail;
+	}
+	//释放完毕
+	printf("释放成功\n");
 }
 
 /*****************************************************************************************
@@ -135,232 +140,37 @@ void BigFigure::core_IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure 
 
 }
 
-#if 0
-
-//显示当前对象存储的数字
-/*
-已完成,待检验
-有bug
-*/
-void BigFigure::printfBF()
-{
-	size_t unPrintZero = 0;		//记录还未显示出来的0的个数
-	size_t a = 0;
-	bool hasPoint = false;
-	if (Detail->Minus)
-		printf("-");
-	if (ScinotationShow)
-	{
-		//以科学计数法显示
-		size_t nowLen = 1;		//统计已输出的有效位的个数
-		size_t skip = 0;
-
-		while (Detail->NumInt[a] == '0')
-			a++, skip++;
-		if (Detail->NumInt[a] == 0)
-		{
-			//整数部分已经为0,已经被跳过
-			a = 0;
-			while (Detail->NumFloat[a] == '0')
-				a++, skip++;
-			if (Detail->NumFloat[a] == 0)
-			{
-				//发现全部项都为0,数字为0
-				skip = 0;
-				printf("0\n");
-				return;
-			}
-			else {
-				printf("%c", Detail->NumFloat[a]);
-				a++;
-			}
-			//显示剩余的应显示的位
-			while (!hasPoint&& nowLen < ScinotationLen&&Detail->NumFloat[a] != 0)
-			{
-				if (Detail->NumFloat[a] == '0')
-					unPrintZero += 1;
-				else
-				{
-					if (unPrintZero != 0)
-					{
-						printf("%s%0*d", hasPoint ? "" : ".", unPrintZero, 0);
-						unPrintZero = 0;
-					}
-					printf("%s%c", hasPoint ? "" : ".", Detail->NumFloat[a++]);
-					hasPoint = true;
-				}
-				nowLen++;
-			}
-			while (nowLen < ScinotationLen&&Detail->NumFloat[a] != 0)
-			{
-				if (Detail->NumFloat[a] == '0')
-					unPrintZero += 1;
-				else
-				{
-					if (unPrintZero != 0)
-					{
-						printf("%0*d", unPrintZero, 0);
-						unPrintZero = 0;
-					}
-					printf("%c", Detail->NumFloat[a++]);
-				}
-				nowLen++;
-			}
-			//用0补齐有效位数
-
-
-			if (ReserveZero) {
-				printf("%s", hasPoint ? "" : ".");
-				//hasPoint=0;
-				if (Detail->NumFloat[a] == 0)
-					for (; nowLen < ScinotationLen; nowLen++)
-						printf("0");
-			}
-			printf("E%s%d\n", skip ? "-" : "+", skip);
-		}
-		else {
-			//整数部分不为0,输出第一个有效位,接着输出第二个有效位
-			printf("%c", Detail->NumInt[a++]);
-			skip = 0;			//在这里skip用于存储在整数位后被移动到小数位的位数
-
-			while (!hasPoint&&nowLen < ScinotationLen&&Detail->NumInt[a] != 0)	//等待需要小数点的地方
-			{
-				if (!ReserveZero) {
-					//不保留末尾的0
-					if (Detail->NumInt[a] == '0')
-						unPrintZero += 1;
-					else
-					{
-						if (unPrintZero != 0)
-						{
-							printf("%s%0*d", hasPoint ? "" : ".", unPrintZero, 0);
-							unPrintZero = 0;
-							hasPoint = true;
-						}
-						printf("%s%c", hasPoint ? "" : ".", Detail->NumInt[a]);
-						hasPoint = true;
-					}
-				}
-				else {
-					printf("%s%c", hasPoint ? "" : ".", Detail->NumInt[a]);
-					hasPoint = true;
-				}
-				nowLen++, a++, skip++;
-			}
-			while (nowLen < ScinotationLen&&Detail->NumInt[a] != 0)
-			{
-				if (!ReserveZero) {
-					//不保留末尾的0
-					if (Detail->NumInt[a] == '0')
-						unPrintZero += 1;
-					else
-					{
-						if (unPrintZero != 0)
-						{
-							printf("%0*d", unPrintZero, 0);
-							unPrintZero = 0;
-						}
-						printf("%c", Detail->NumInt[a]);
-					}
-				}
-				else {
-					printf("%c", Detail->NumInt[a]);
-				}
-				nowLen++, a++, skip++;
-			}
-			if (nowLen == ScinotationLen)	//有效位输出足够之后,剩下的位忽略,只计算长度
-			{
-				while (Detail->NumInt[a] != 0)
-					a++, skip++;
-			}
-
-			a = 0;
-			while (nowLen < ScinotationLen&&Detail->NumFloat[a] != 0)
-			{
-				if (!ReserveZero)	//不保留多余的0
-				{
-					if (Detail->NumFloat[a] == '0')
-						unPrintZero += 1;
-					else
-					{
-						if (unPrintZero != 0)
-						{
-							printf("%0*d", unPrintZero, 0);
-							unPrintZero = 0;
-						}
-						printf("%c", Detail->NumFloat[a]);
-					}
-				}
-				else printf("%c", Detail->NumFloat[a]);
-
-				nowLen++, a++;
-			}
-			printf("E+%d\n", skip);
-		}
-	}
-	else {
-		//直接输出数字
-		printf("%s", Detail->NumInt);
-		unPrintZero = 0;
-		if (Detail->NumFloat[0] != 0)
-		{
-			printf(".");
-			if (!ReserveZero) {
-				//不保留末尾的0
-				while (Detail->NumFloat[a] != 0) {
-					if (Detail->NumFloat[a] == '0')
-						unPrintZero += 1;
-					else
-					{
-						if (unPrintZero != 0)
-						{
-							printf("%0*d", unPrintZero, 0);
-							unPrintZero = 0;
-						}
-						printf("%c", Detail->NumFloat[a]);
-					}
-					a++;
-				}
-			}
-			else {
-				printf("%s", Detail->NumFloat);
-			}
-		}
-		printf("\n");
-	}
-}
-
-
-
 //打印该对象的详细信息
-/*
-##未完成
-*/
 void BigFigure::printDetail()
 {
 	printf(
-		"数字字符串分配内存:%d(%d+%d)\n"
+		"数字分配内存    :%d(%d+%d)\n"
 		"整数部分有效位数:%d\n"
 		"小数最大存储精度:%d\n"
 		"以科学计数法输出:%s\n"
-		"科学计数法输出时有效位数:%d\n"
-		"值:",
+		"保留多余的0     :%s\n"
+		"输出时有效位数  :%d\n"
+		"存储的值        :%s\n",
 		Detail->AllocatedSize, Detail->IntAllocatedLen + 1, Detail->AllocatedSize - Detail->IntAllocatedLen - 1,
 		Detail->IntLen,
 		Detail->Accuracy,
 		ScinotationShow ? "是" : "否",
-		ScinotationLen
+		ReserveZero ? "是" : "否",
+		ScinotationLen,
+		toString().c_str()
 	);
-	printfBF();
 	return;
 }
-#endif
 
 
 /******************************************************************************************
 重载函数
 *******************************************************************************************/
-
+BigFigure& BigFigure::operator=(const BigFigure &Base)
+{
+	printf("=重载\n");
+	return *this;
+}
 
 
 
@@ -671,14 +481,11 @@ Mode 2 按照科学计数法进行输出
 std::string BigFigure::toString(bool UseScinotation, bool ReserveZero)
 {
 	char *tempString = NULL;							//保存缓冲区地址
+	int skip;											//被跳过的位数省略的位数用于最终计算指数
+	bool HasNumPre;
+	std::string RetVal;									//返回的字符串的长度
 	size_t index_p = 0;									//写入位置标记
 	size_t r_index;										//从元数据中读取数据的下标
-	size_t r_Len;										//从源字符串读取的长度
-	int skip;											//被跳过的位数省略的位数用于最终计算指数
-
-	bool HasNumPre;
-
-	std::string RetVal;									//返回的字符串的长度
 
 	if (Detail->Illage)
 	{
@@ -728,7 +535,7 @@ std::string BigFigure::toString(bool UseScinotation, bool ReserveZero)
 					tempString[index_p++] = 0;
 				}
 			}
-			else 
+			else
 			{
 				//整数部分数据不为0
 				HasNumPre = true;
@@ -738,6 +545,16 @@ std::string BigFigure::toString(bool UseScinotation, bool ReserveZero)
 				{
 					tempString[index_p++] = '.';
 					strncpy(tempString + index_p, Detail->NumInt + 1, ScinotationLen - 1);
+					if (ScinotationLen <= Detail->IntLen)
+					{
+						//精度大于有效位
+						index_p += ScinotationLen - 1;
+					}
+					else
+					{
+						//有效位大于精度
+						index_p += Detail->IntLen - 1;
+					}
 				}
 				else if (Detail->Accuracy &&Detail->NumFloat[0] != 0)
 					tempString[index_p++] = '.';//小数点后有数字
@@ -747,15 +564,14 @@ std::string BigFigure::toString(bool UseScinotation, bool ReserveZero)
 					if (Detail->IntLen < ScinotationLen)
 					{
 						//整数的有效位不够,继续拿小数位
-						index_p = Detail->IntLen + 1;
 						strncpy(tempString + index_p, Detail->NumFloat, ScinotationLen - Detail->IntLen);
 						index_p += ScinotationLen - Detail->IntLen;
-						if (!ReserveZero)
-						{
-							index_p--;
-							while (tempString[index_p] == '0')index_p--;	//将有效数字尾部的'0'去除
-							tempString[index_p++] == 0;						//写入'\0'
-						}
+					}
+					if (!ReserveZero)
+					{
+						index_p--;
+						while (tempString[index_p] == '0')index_p--;	//将有效数字尾部的'0'去除
+						tempString[index_p++] == 0;						//写入'\0'
 					}
 				}
 			}
@@ -793,6 +609,20 @@ std::string BigFigure::toString(bool UseScinotation, bool ReserveZero)
 		delete tempString;
 	}
 	return RetVal;
+}
+
+//将一个对象的值复制到当前对象中,两个对象相互独立
+BigFigure & BigFigure::CopyDetail(const BigFigure & Base)
+{
+	this->Detail->IntLen = Base.Detail->IntLen;
+	this->Detail->Illage = Base.Detail->Illage;
+	this->Detail->Minus = Base.Detail->Minus;
+	//这里存在精度丢失的问题,注意考虑
+	
+	
+
+
+	return *this;
 }
 
 

@@ -84,6 +84,14 @@ void test1(std::string testData)
 
 */
 
+void AA(BF a)
+{
+	BF B(100, 100);
+	B = a;
+	std::cout << "AA" << std::endl;
+	B.printDetail();
+}
+
 int main(int argc, const char * argv[]) {
 
 	//test1("123456789");
@@ -114,18 +122,12 @@ int main(int argc, const char * argv[]) {
 	//std::cout << NumCheck("45.789") << std::endl;
 	ConfirmWontLossAccuracy = false;
 	ConfirmWontLossHighBit = false;
-	ScinotationLen = 15;
+	ScinotationLen = 11;
 
-	BF bf(40,40);
-
-	//1.4327677766926336
-
-	//0x00affe8c {125.50000000000000}
-
-	//605f40
+	BF bf(40, 40);
 	//NumStringDetail n("123456.0000000000000009E5");
 	//bf.toBF(NumStringDetail("0.123456789123456789"));
-	bf.toBF(NumStringDetail(-12300000.3200002));
+	bf.toBF(NumStringDetail(-1234560.003200002));
 #if 0
 	bf.toBF(
 		NumStringDetail("-1889001000.333E-2")
@@ -136,7 +138,10 @@ int main(int argc, const char * argv[]) {
 	//NumStringDetail n1(FormatToString(-45.0000000001));
 	//FormatToString();
 	ReserveZero = true;
-	std::cout<<bf.toString(true,false);
+	//std::cout<<bf.toString(true,true);
+	AA(bf);
+	std::cout << "main" << std::endl;
+	bf.printDetail();
 	//1.2075877953241088
 	system("pause");
 	return 0;

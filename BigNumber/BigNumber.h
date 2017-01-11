@@ -86,7 +86,7 @@ private:
 	} *Detail;
 	//void FreeDetail();
 public:
-	BigFigure();
+	//BigFigure();
 	BigFigure(size_t IntSize, size_t FloatSize)throw(...);
 	BigFigure(const BigFigure& Base);
 	~BigFigure();
@@ -96,10 +96,11 @@ public:
 	//void core_FloatAdd();
 	void toBF(NumStringDetail &NumStringDetail);							//将其他数据类型写入到当前对象中
 	std::string toString();													//将当前对象输出为字符串
-	std::string BigFigure::toString(bool UseScinotation, bool ReserveZero);	//将当前对象输出为字符串(通过mode可选择输出模式(正常显示|科学计数法))
-	//void printfBF();
+	std::string toString(bool UseScinotation, bool ReserveZero);			//将当前对象输出为字符串(通过mode可选择输出模式(正常显示|科学计数法))
+	BigFigure& CopyDetail(const BigFigure &Base);
+//void printfBF();
 	void printDetail();
-
+	BigFigure& operator=(const BigFigure &Base);
 };
 
 typedef BigFigure BF;
