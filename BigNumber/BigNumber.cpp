@@ -47,11 +47,19 @@ NumStringDetail::NumStringDetail(double Num) :
 	this->NumString = std::string(TempString);
 	NumCheck(*this);
 }
+NumStringDetail::NumStringDetail(__int64 Num) :
+	RadixMinus(0), ExpMinus(0), IntBeZero(0), Mode(0), IntLen(0), FloatLen(0), ExpLen(0), IntStart_p(0), FloatStart_p(0), ExpStart_p(0)
+{
+	char TempString[32];
+	sprintf(TempString, "%I64d", Num);
+	this->NumString = std::string(TempString);
+	NumCheck(*this);
+}
 NumStringDetail::NumStringDetail(long Num) :
 	RadixMinus(0), ExpMinus(0), IntBeZero(0), Mode(0), IntLen(0), FloatLen(0), ExpLen(0), IntStart_p(0), FloatStart_p(0), ExpStart_p(0)
 {
 	char TempString[32];
-	_gcvt(Num, 16, TempString);
+	sprintf(TempString, "%ld", Num);
 	this->NumString = std::string(TempString);
 	NumCheck(*this);
 }
@@ -59,7 +67,7 @@ NumStringDetail::NumStringDetail(int Num) :
 	RadixMinus(0), ExpMinus(0), IntBeZero(0), Mode(0), IntLen(0), FloatLen(0), ExpLen(0), IntStart_p(0), FloatStart_p(0), ExpStart_p(0)
 {
 	char TempString[16];
-	_gcvt(Num, 16, TempString);
+	sprintf(TempString, "%d", Num);
 	this->NumString = std::string(TempString);
 	NumCheck(*this);
 }
@@ -141,7 +149,7 @@ void BigFigure::core_IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure 
 void BigFigure::printDetail()
 {
 	printf(
-		"数字分配内存    :%d(%d+%d)\n"
+		"字符串分配内存  :%d(%d+%d)\n"
 		"整数部分有效位数:%d\n"
 		"小数最大存储精度:%d\n"
 		"以科学计数法输出:%s\n"
@@ -163,14 +171,30 @@ void BigFigure::printDetail()
 /******************************************************************************************
 重载函数
 *******************************************************************************************/
-BigFigure& BigFigure::operator=(const BigFigure &Base)
+BigFigure& BigFigure::operator=(const BigFigure &Source)
 {
-	return CopyDetail(Base);
+	return CopyDetail(Source);
 }
-
-
-
-
+BigFigure& BigFigure::operator=(const double Source)
+{
+	this->toBF(NumStringDetail(Source));
+	return *this;
+}
+BigFigure& BigFigure::operator=(const __int64 Source)
+{
+	this->toBF(NumStringDetail(Source));
+	return *this;
+}
+BigFigure& BigFigure::operator=(const long Source)
+{
+	this->toBF(NumStringDetail(Source));
+	return *this;
+}
+BigFigure& BigFigure::operator=(const int Source)
+{
+	this->toBF(NumStringDetail(Source));
+	return *this;
+}
 
 /******************************************************************************************
 对象方法
@@ -608,16 +632,16 @@ std::string BigFigure::toString(bool UseScinotation, bool ReserveZero)
 }
 
 //将一个对象的值复制到当前对象中,两个对象相互独立
-BigFigure & BigFigure::CopyDetail(const BigFigure & Base)
+BigFigure & BigFigure::CopyDetail(const BigFigure & Source)
 {
-	this->Detail->Minus = Base.Detail->Minus;
-	this->Detail->Illage = Base.Detail->Illage;
-	if (this->Detail->IntAllocatedLen >= Base.Detail->IntLen)
+	this->Detail->Minus = Source.Detail->Minus;
+	this->Detail->Illage = Source.Detail->Illage;
+	if (this->Detail->IntAllocatedLen >= Source.Detail->IntLen)
 	{
 		//空间足够复制,进行复制
-		this->Detail->NumInt = this->Detail->IntTail - Base.Detail->IntLen;	//找到写入位置
-		this->Detail->IntLen = Base.Detail->IntLen;
-		strcpy(this->Detail->NumInt, Base.Detail->NumInt);
+		this->Detail->NumInt = this->Detail->IntTail - Source.Detail->IntLen;	//找到写入位置
+		this->Detail->IntLen = Source.Detail->IntLen;
+		strcpy(this->Detail->NumInt, Source.Detail->NumInt);
 	}
 	else
 	{
@@ -627,7 +651,7 @@ BigFigure & BigFigure::CopyDetail(const BigFigure & Base)
 		else
 		{
 			this->Detail->NumInt = this->Detail->StringHead;
-			strncpy(this->Detail->NumInt, Base.Detail->NumInt+Base.Detail->IntLen - this->Detail->IntAllocatedLen, this->Detail->IntAllocatedLen);
+			strncpy(this->Detail->NumInt, Source.Detail->NumInt + Source.Detail->IntLen - this->Detail->IntAllocatedLen, this->Detail->IntAllocatedLen);
 			while (this->Detail->NumInt[0] == '0')this->Detail->NumInt++;		//去除整数前面的0
 			this->Detail->IntLen = this->Detail->IntTail - this->Detail->NumInt;//计算整数的长度
 		}
@@ -635,18 +659,18 @@ BigFigure & BigFigure::CopyDetail(const BigFigure & Base)
 
 
 	if (this->Detail->Accuracy) {
-		if (Base.Detail->Accuracy)
+		if (Source.Detail->Accuracy)
 		{
-			if (Base.Detail->NumFloat[0] != 0)
+			if (Source.Detail->NumFloat[0] != 0)
 			{
-				if (this->Detail->Accuracy >= Base.Detail->Accuracy)
+				if (this->Detail->Accuracy >= Source.Detail->Accuracy)
 				{
 					//一定装得下小数位
-					strcpy(this->Detail->NumFloat, Base.Detail->NumFloat);
+					strcpy(this->Detail->NumFloat, Source.Detail->NumFloat);
 				}
 				else
 				{
-					size_t len = strlen(Base.Detail->NumFloat);
+					size_t len = strlen(Source.Detail->NumFloat);
 					if (len > this->Detail->Accuracy)
 					{
 						//小数位超过,将会截断
@@ -655,11 +679,11 @@ BigFigure & BigFigure::CopyDetail(const BigFigure & Base)
 						else
 						{
 							//进行截断
-							strncpy(this->Detail->NumFloat, Base.Detail->NumFloat, this->Detail->Accuracy);
+							strncpy(this->Detail->NumFloat, Source.Detail->NumFloat, this->Detail->Accuracy);
 						}
 					}
 					else {
-						strcpy(this->Detail->NumFloat, Base.Detail->NumFloat);
+						strcpy(this->Detail->NumFloat, Source.Detail->NumFloat);
 					}
 				}
 			}
@@ -673,9 +697,9 @@ BigFigure & BigFigure::CopyDetail(const BigFigure & Base)
 		//如果目标对象没有分配整数位,不需要进行复制,但是要判断情况,决定是否要抛出异常
 		if (ConfirmWontLossAccuracy)
 		{
-			if (Base.Detail->Accuracy)
+			if (Source.Detail->Accuracy)
 			{
-				if (Base.Detail->NumFloat[0] != 0)
+				if (Source.Detail->NumFloat[0] != 0)
 					throw BFException(ERR_MAYACCURACYLOSS, "目标对象没有小数位,源数据的小数位将被忽略");
 				//提示可能丢失精度
 			}
@@ -683,7 +707,6 @@ BigFigure & BigFigure::CopyDetail(const BigFigure & Base)
 	}
 	return *this;
 }
-
 
 
 /******************************************************************************************
@@ -911,3 +934,87 @@ bool NumCheck(NumStringDetail &NumDetail)
 	return 1;
 }
 
+//比较两个数的大小
+/*
+返回值表示两个数的大小情况
+0,	OperandA==OperandB
+1,	OperandA>OperandB
+-1,	OperandA<OperandB
+2,	OperandA>>OperandB
+-2,	OperandA<<OperandB
+*/
+int BFCmp(const BigFigure &OperandA, const BigFigure &OperandB)
+{
+	int minus = 1;
+
+	//判断负号
+	if (OperandA.Detail->Minus)
+	{
+		if (OperandB.Detail->Minus)
+			minus = -1;//A,B同负
+		else
+			return -2;//A负B正
+	}
+	else
+	{
+		if (OperandB.Detail->Minus)
+			return 2;//A正B负
+		//minus默认为1,不需要改动
+	}
+
+	//判断位
+	if (OperandA.Detail->IntLen > OperandB.Detail->IntLen)
+	{
+		return 2*minus;
+	}
+	else if (OperandA.Detail->IntLen < OperandB.Detail->IntLen)
+	{
+		return -2 * minus;
+	}
+	else
+	{
+		//如果两个数整数部分长度相等,则进行比较各个位
+		int temp = strcmp(OperandA.Detail->NumInt, OperandB.Detail->NumInt);
+		if (temp)
+		{
+			//比较出结果,返回
+			return temp*minus;
+		}
+		else {
+			//整数部分完全相等,继续进行比较小数部分
+			int index_p = 0;
+			while (OperandA.Detail->NumFloat[index_p] && OperandA.Detail->NumFloat[index_p] == OperandB.Detail->NumFloat[index_p])index_p++;
+			if (OperandB.Detail->NumFloat[index_p] && OperandA.Detail->NumFloat[index_p] > OperandB.Detail->NumFloat[index_p])
+			{
+				//if (OperandB.Detail->NumFloat[index_p] >= '0')
+				return minus;
+			}
+			else if (OperandA.Detail->NumFloat[index_p] && OperandA.Detail->NumFloat[index_p] < OperandB.Detail->NumFloat[index_p])
+			{
+				return -minus;
+			}
+			else
+			{
+				temp = 0;
+				int index_p2 = index_p;
+				if (OperandA.Detail->NumFloat[index_p2] == '0')
+				{
+					index_p2++;
+					while (OperandA.Detail->NumFloat[index_p2] == '0'&&OperandA.Detail->NumFloat[index_p2] != 0)index_p2++;
+					if (OperandA.Detail->NumFloat[index_p2] != 0 && OperandA.Detail->NumFloat[index_p2] != '0')
+						temp = 1;
+				}
+				index_p2 = index_p;
+				if (OperandB.Detail->NumFloat[index_p2] == '0')
+				{
+					index_p2++;
+					while (OperandB.Detail->NumFloat[index_p2] == '0'&&OperandB.Detail->NumFloat[index_p2] != 0)index_p2++;
+					if (OperandB.Detail->NumFloat[index_p2] != 0 && OperandB.Detail->NumFloat[index_p2] != '0')
+						temp = -1;
+				}
+				return temp*minus;
+			}
+
+		}
+	}
+}

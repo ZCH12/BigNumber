@@ -61,6 +61,7 @@ private:
 public:
 	NumStringDetail(std::string NumString);
 	NumStringDetail(double Num);
+	NumStringDetail(__int64 Num);
 	NumStringDetail(long Num);
 	NumStringDetail(int Num);
 	friend bool NumCheck(NumStringDetail &NumDetail);
@@ -101,11 +102,18 @@ public:
 	void toBF(NumStringDetail &NumStringDetail);							//将其他数据类型写入到当前对象中
 	std::string toString();													//将当前对象输出为字符串
 	std::string toString(bool UseScinotation, bool ReserveZero);			//将当前对象输出为字符串(通过mode可选择输出模式(正常显示|科学计数法))
-	BigFigure& CopyDetail(const BigFigure &Base);
+	BigFigure& CopyDetail(const BigFigure &Source);							//将
 	void printDetail();
 
+	//友元函数
+	friend int BFCmp(const BigFigure &OperandA, const BigFigure &OperandB);		//比较两个数字的大小
+
 	//重载函数
-	BigFigure& operator=(const BigFigure &Base);
+	BigFigure& operator=(const BigFigure &Source);
+	BigFigure& operator=(const double Source);
+	BigFigure& operator=(const __int64 Source);
+	BigFigure& operator=(const long Source);
+	BigFigure& operator=(const int Source);
 };
 
 typedef BigFigure BF;
