@@ -1,8 +1,7 @@
-﻿#include <memory>
+﻿#define _CRT_SECURE_NO_WARNINGS
+#include <memory>
 #include <cstdio>
-#define _CRT_SECURE_NO_WARNINGS
 #include <cstdlib>
-#include <sstream>
 //默认的长度分配内存的大小
 
 /*
@@ -114,7 +113,6 @@ BigFigure::BigFigure(size_t IntSize, size_t FloatSize) throw(...)
 //复制构造函数
 BigFigure::BigFigure(const BigFigure& Base)
 {
-	printf("进行了复制\n");
 	this->Detail = Base.Detail;
 	this->Detail->ReferCount++;
 }
@@ -124,12 +122,11 @@ BigFigure::~BigFigure()
 	Detail->ReferCount--;
 	if (!Detail->ReferCount)
 	{
-		//释放Detail所占的内存
+		//当引用计数为0时才释放Detail所占的内存
 		delete[] Detail->StringHead;
 		delete Detail;
 	}
-	//释放完毕
-	printf("释放成功\n");
+	return;
 }
 
 /*****************************************************************************************
@@ -168,8 +165,7 @@ void BigFigure::printDetail()
 *******************************************************************************************/
 BigFigure& BigFigure::operator=(const BigFigure &Base)
 {
-	printf("=重载\n");
-	return *this;
+	return CopyDetail(Base);
 }
 
 
@@ -335,11 +331,11 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 		//开始输入到对象中
 		if (expon > 0)				//指数大于0的处理方案
 		{
-			if (Detail->IntAllocatedLen > expon)
+			if ((int)Detail->IntAllocatedLen > expon)
 			{
 				//空间足够存放整数数字
 				Detail->IntLen = expon + 1;
-				if (expon >= size)
+				if (expon >= (int)size)
 				{
 					//如果指数大于有效位数的大小,此时小数点后一定为空,
 					//不够的位要用0补齐
@@ -524,7 +520,7 @@ std::string BigFigure::toString(bool UseScinotation, bool ReserveZero)
 						{
 							index_p--;
 							while (tempString[index_p] == '0')index_p--;	//将有效数字尾部的'0'去除
-							tempString[index_p++] == 0;						//写入'\0'
+							tempString[index_p++] = 0;						//写入'\0'
 						}
 					}
 				}
@@ -571,7 +567,7 @@ std::string BigFigure::toString(bool UseScinotation, bool ReserveZero)
 					{
 						index_p--;
 						while (tempString[index_p] == '0')index_p--;	//将有效数字尾部的'0'去除
-						tempString[index_p++] == 0;						//写入'\0'
+						tempString[index_p++] = 0;						//写入'\0'
 					}
 				}
 			}
@@ -614,14 +610,77 @@ std::string BigFigure::toString(bool UseScinotation, bool ReserveZero)
 //将一个对象的值复制到当前对象中,两个对象相互独立
 BigFigure & BigFigure::CopyDetail(const BigFigure & Base)
 {
-	this->Detail->IntLen = Base.Detail->IntLen;
-	this->Detail->Illage = Base.Detail->Illage;
 	this->Detail->Minus = Base.Detail->Minus;
-	//这里存在精度丢失的问题,注意考虑
-	
-	
+	this->Detail->Illage = Base.Detail->Illage;
+	if (this->Detail->IntAllocatedLen >= Base.Detail->IntLen)
+	{
+		//空间足够复制,进行复制
+		this->Detail->NumInt = this->Detail->IntTail - Base.Detail->IntLen;	//找到写入位置
+		this->Detail->IntLen = Base.Detail->IntLen;
+		strcpy(this->Detail->NumInt, Base.Detail->NumInt);
+	}
+	else
+	{
+		//空间不足以复制,进行判断,考虑截断
+		if (ConfirmWontLossHighBit)
+			throw BFException(ERR_NUMBERTOOBIG, "数据溢出");
+		else
+		{
+			this->Detail->NumInt = this->Detail->StringHead;
+			strncpy(this->Detail->NumInt, Base.Detail->NumInt+Base.Detail->IntLen - this->Detail->IntAllocatedLen, this->Detail->IntAllocatedLen);
+			while (this->Detail->NumInt[0] == '0')this->Detail->NumInt++;		//去除整数前面的0
+			this->Detail->IntLen = this->Detail->IntTail - this->Detail->NumInt;//计算整数的长度
+		}
+	}
 
 
+	if (this->Detail->Accuracy) {
+		if (Base.Detail->Accuracy)
+		{
+			if (Base.Detail->NumFloat[0] != 0)
+			{
+				if (this->Detail->Accuracy >= Base.Detail->Accuracy)
+				{
+					//一定装得下小数位
+					strcpy(this->Detail->NumFloat, Base.Detail->NumFloat);
+				}
+				else
+				{
+					size_t len = strlen(Base.Detail->NumFloat);
+					if (len > this->Detail->Accuracy)
+					{
+						//小数位超过,将会截断
+						if (ConfirmWontLossAccuracy)
+							throw BFException(ERR_MAYACCURACYLOSS, "源数据的大小比目标数据的大小大,可能丢失精度");
+						else
+						{
+							//进行截断
+							strncpy(this->Detail->NumFloat, Base.Detail->NumFloat, this->Detail->Accuracy);
+						}
+					}
+					else {
+						strcpy(this->Detail->NumFloat, Base.Detail->NumFloat);
+					}
+				}
+			}
+		}
+		else {
+			//源小数位无数据
+			this->Detail->NumFloat[0] = 0;
+		}
+	}
+	else {
+		//如果目标对象没有分配整数位,不需要进行复制,但是要判断情况,决定是否要抛出异常
+		if (ConfirmWontLossAccuracy)
+		{
+			if (Base.Detail->Accuracy)
+			{
+				if (Base.Detail->NumFloat[0] != 0)
+					throw BFException(ERR_MAYACCURACYLOSS, "目标对象没有小数位,源数据的小数位将被忽略");
+				//提示可能丢失精度
+			}
+		}
+	}
 	return *this;
 }
 

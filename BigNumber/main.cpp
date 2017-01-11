@@ -86,7 +86,7 @@ void test1(std::string testData)
 
 void AA(BF a)
 {
-	BF B(100, 100);
+	BF B(25, 8);
 	B = a;
 	std::cout << "AA" << std::endl;
 	B.printDetail();
@@ -120,14 +120,15 @@ int main(int argc, const char * argv[]) {
 	//std::cout << BitCount_check("1230.1E-4", re)<<std::endl;
 	//std::cout << re[0] << "   " << re[1] << std::endl;
 	//std::cout << NumCheck("45.789") << std::endl;
-	ConfirmWontLossAccuracy = false;
-	ConfirmWontLossHighBit = false;
+	ConfirmWontLossAccuracy = true;
+	ConfirmWontLossHighBit = true;
 	ScinotationLen = 11;
+	ScinotationShow = true;
 
-	BF bf(40, 40);
+	BF bf(40, 8);
 	//NumStringDetail n("123456.0000000000000009E5");
 	//bf.toBF(NumStringDetail("0.123456789123456789"));
-	bf.toBF(NumStringDetail(-1234560.003200002));
+	bf.toBF(NumStringDetail("-1234500000000000000000060.003200002"));
 #if 0
 	bf.toBF(
 		NumStringDetail("-1889001000.333E-2")
