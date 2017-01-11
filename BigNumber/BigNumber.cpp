@@ -371,6 +371,9 @@ void BigFigure::printDetail()
 *******************************************************************************************/
 
 //将字符串写入BF中
+/*
+已完成
+*/
 void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 {
 	int temp;
@@ -389,16 +392,27 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 		if (Detail->IntAllocatedLen >= NumStringDetail.IntLen)
 		{
 			//正常情况下
-			Detail->NumInt = Detail->IntTail - NumStringDetail.IntLen;
-			Detail->IntLen = NumStringDetail.IntLen;
-			strncpy(Detail->NumInt, NumStringDetail.NumString.c_str() + NumStringDetail.IntStart_p, NumStringDetail.IntLen);
+			if (NumStringDetail.IntBeZero)
+			{
+				//整数部分为0
+				Detail->NumInt = Detail->IntTail - 1;
+				Detail->NumInt[0] = '0';
+				Detail->IntLen = 1;
+			}
+			else {
+				//整数部分不为0
+				Detail->NumInt = Detail->IntTail - NumStringDetail.IntLen;
+				Detail->IntLen = NumStringDetail.IntLen;
+				strncpy(Detail->NumInt, NumStringDetail.NumString.c_str() + NumStringDetail.IntStart_p, NumStringDetail.IntLen);
+			}
+
 		}
 		else
 		{
 			//如果发生溢出
 			if (ConfirmWontLossHighBit)
 			{
-				Detail->Illage = false;
+				Detail->Illage = true;
 				throw BFException(ERR_NUMBERTOOBIG, "对于目标对象,传入的数据太大,该对象无法容纳");
 			}
 			else
@@ -412,12 +426,12 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 
 		if (NumStringDetail.Mode == 1)
 		{
-			Detail->Illage = true;
+			Detail->Illage = false;
 			Detail->NumFloat[0] = 0;
 			return;
 		}
 		//以下小数部分的处理
-		if (Detail->Accuracy) 
+		if (Detail->Accuracy)
 		{
 			if (NumStringDetail.FloatLen <= Detail->Accuracy)
 				strncpy(Detail->NumFloat, NumStringDetail.NumString.c_str() + NumStringDetail.FloatStart_p, NumStringDetail.FloatLen);
@@ -425,7 +439,7 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 			{
 				if (ConfirmWontLossAccuracy)
 				{
-					Detail->Illage = false;
+					Detail->Illage = true;
 					throw BFException(ERR_MAYACCURACYLOSS, "写入的有效位数多于目标对象的容量,数据可能丢失");
 				}
 				else
@@ -437,11 +451,11 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 			if (ConfirmWontLossAccuracy)							//小数位没有分配内存,将忽略小数位的处理
 			{
 				//确保不截断开关开启,抛出异常
-				Detail->Illage = false;
+				Detail->Illage = true;
 				throw BFException(ERR_MAYACCURACYLOSS, "没有为小数位分配内存,可能会损失精度");
 			}
 		}
-		Detail->Illage = true;
+		Detail->Illage = false;
 		return;
 	case 3://科学计数法表示的以整数为底数的数字
 	case 4://科学计数法表示的以小数为底数的数字
@@ -642,6 +656,145 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 	}
 }
 
+//将对象中存储的数据转化为字符串,并返回(使用全局设定进行输出)
+std::string BigFigure::toString()
+{
+	return toString(ScinotationShow, ReserveZero);
+}
+
+//将对象中存储的数据转化为字符串,并返回
+/*
+Mode 0
+Mode 1 按照普通的输出方式进行输出(默认)
+Mode 2 按照科学计数法进行输出
+*/
+std::string BigFigure::toString(bool UseScinotation, bool ReserveZero)
+{
+	char *tempString = NULL;							//保存缓冲区地址
+	size_t index_p = 0;									//写入位置标记
+	size_t r_index;										//从元数据中读取数据的下标
+	size_t r_Len;										//从源字符串读取的长度
+	int skip;											//被跳过的位数省略的位数用于最终计算指数
+
+	bool HasNumPre;
+
+	std::string RetVal;									//返回的字符串的长度
+
+	if (Detail->Illage)
+	{
+		//非法的数字输出Nan
+		return std::string("NaN");
+	}
+	else {
+		tempString = new char[Detail->AllocatedSize];	//新建一块缓冲区
+		if (Detail->Minus)								//输出负号
+			tempString[index_p++] = '-';
+
+		if (UseScinotation)
+		{
+			//使用科学计数法输出
+
+			if (Detail->NumInt[0] == '0' && Detail->IntLen == 1)
+			{
+				//整数部分数据为0
+				HasNumPre = false;
+				r_index = 0;
+				skip = 0;
+
+				while (Detail->NumFloat[r_index] == '0' && r_index < Detail->Accuracy) r_index++;	//找到有效位
+
+				if (Detail->NumFloat[r_index] != 0)
+				{
+					skip = r_index - 1;						//计算省略的位数
+					tempString[index_p++] = Detail->NumFloat[r_index++];	//输出第一位
+					if (Detail->NumFloat[r_index] != 0)
+					{
+						//后面还有有效位,继续输出
+						tempString[index_p++] = '.';						//输出小数点
+						while (Detail->NumFloat[r_index] != 0 && r_index < Detail->Accuracy&&index_p < ScinotationLen)	//输出剩余有效位
+							tempString[index_p++] = Detail->NumFloat[r_index++];
+						if (!ReserveZero)
+						{
+							index_p--;
+							while (tempString[index_p] == '0')index_p--;	//将有效数字尾部的'0'去除
+							tempString[index_p++] == 0;						//写入'\0'
+						}
+					}
+				}
+				else
+				{
+					//该值为0,写入0
+					tempString[index_p++] = '0';
+					tempString[index_p++] = 0;
+				}
+			}
+			else 
+			{
+				//整数部分数据不为0
+				HasNumPre = true;
+				skip = Detail->IntLen - 1;
+				tempString[index_p++] = Detail->NumInt[0];							//把第一位输入
+				if (Detail->NumInt[index_p] != 0)
+				{
+					tempString[index_p++] = '.';
+					strncpy(tempString + index_p, Detail->NumInt + 1, ScinotationLen - 1);
+				}
+				else if (Detail->Accuracy &&Detail->NumFloat[0] != 0)
+					tempString[index_p++] = '.';//小数点后有数字
+
+				if (Detail->Accuracy &&Detail->NumFloat[0] != 0)
+				{
+					if (Detail->IntLen < ScinotationLen)
+					{
+						//整数的有效位不够,继续拿小数位
+						index_p = Detail->IntLen + 1;
+						strncpy(tempString + index_p, Detail->NumFloat, ScinotationLen - Detail->IntLen);
+						index_p += ScinotationLen - Detail->IntLen;
+						if (!ReserveZero)
+						{
+							index_p--;
+							while (tempString[index_p] == '0')index_p--;	//将有效数字尾部的'0'去除
+							tempString[index_p++] == 0;						//写入'\0'
+						}
+					}
+				}
+			}
+
+			if (skip) //输出指数
+			{
+				tempString[index_p++] = 'E';
+				sprintf(tempString + index_p, "%d", skip);
+			}
+		}
+		else {
+			//正常数字输出
+			strncpy(tempString + index_p, Detail->NumInt, Detail->IntLen);
+
+			index_p += Detail->IntLen;
+			if (Detail->Accuracy)
+			{
+				r_index = 0;
+				if (Detail->NumFloat[0] != 0)
+					tempString[index_p++] = '.';
+				while (Detail->NumFloat[r_index] != 0)
+					tempString[index_p++] = Detail->NumFloat[r_index++];
+
+				if (!ReserveZero)									//去除0
+				{
+					index_p--;										//指向上一个已写的位
+					while (tempString[index_p] == '0') index_p--;	//删除为0的位
+					if (tempString[index_p] == '.')index_p--;		//如果小数点被删光,则再删除小数点
+					index_p++;										//指向下一个可写的位
+				}
+			}
+			tempString[index_p] = 0;								//写入字符串结束符
+		}
+		RetVal = std::string(tempString);
+		delete tempString;
+	}
+	return RetVal;
+}
+
 
 
 /******************************************************************************************
@@ -814,6 +967,17 @@ bool NumCheck(NumStringDetail &NumDetail)
 			return 0;
 		}
 	}
+
+	if (!HasNumPre && !HasPoint)
+	{
+		//单独处理0
+		NumDetail.IntStart_p = 0;
+		NumDetail.IntLen = 1;
+		if (NumDetail.NumString.empty())	//为空字符串时把字符串初始化为0
+			NumDetail.NumString = "0";
+	}
+
+
 
 	//如果是正确的数字, 则可以通过这个for的验证
 	NumDetail.IntBeZero = IntBeZero;

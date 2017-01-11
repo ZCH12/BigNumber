@@ -65,7 +65,6 @@ public:
 	NumStringDetail(int Num);
 	friend bool NumCheck(NumStringDetail &NumDetail);
 	friend class BigFigure;
-	//NumStringDetail(double Number);
 };
 
 class BigFigure
@@ -95,7 +94,9 @@ public:
 	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);
 	//void core_FloatAdd();
 	//void core_FloatAdd();
-	void toBF(NumStringDetail &NumStringDetail);						//将其他数据类型写入到当前对象中
+	void toBF(NumStringDetail &NumStringDetail);							//将其他数据类型写入到当前对象中
+	std::string toString();													//将当前对象输出为字符串
+	std::string BigFigure::toString(bool UseScinotation, bool ReserveZero);	//将当前对象输出为字符串(通过mode可选择输出模式(正常显示|科学计数法))
 	//void printfBF();
 	void printDetail();
 
