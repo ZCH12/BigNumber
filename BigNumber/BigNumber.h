@@ -93,7 +93,7 @@ public:
 	~BigFigure();
 
 	//运算函数
-	void core_IntAdd(BigFigure &result, BigFigure &OperandA, BigFigure &OperandB);
+	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB);
 	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);
 	//void core_FloatAdd();
 	//void core_FloatAdd();
@@ -110,10 +110,12 @@ public:
 
 	//重载函数
 	BigFigure& operator=(const BigFigure &Source);
+	BigFigure& operator=(const char* Source);
 	BigFigure& operator=(const double Source);
 	BigFigure& operator=(const __int64 Source);
 	BigFigure& operator=(const long Source);
 	BigFigure& operator=(const int Source);
+	friend std::ostream& operator<<( std::ostream& out,BigFigure& Source);
 };
 
 typedef BigFigure BF;

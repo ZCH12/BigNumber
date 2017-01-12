@@ -11,6 +11,11 @@
 
 #include "BigNumber.h"
 
+//常量定义
+#define CONST_OVER9 106		//大于等于这个数的为两个数相加大于'9'的
+//#define CONST_BELOW0 95		//小于等于这个数的为两个数相减
+
+
 //控制显示方式的变量
 bool ReserveZero = true;			//保留小数后的0
 bool ScinotationShow = false;		//不以科学计数法显示数字
@@ -140,9 +145,91 @@ BigFigure::~BigFigure()
 /*****************************************************************************************
 算术运算核心函数
 ******************************************************************************************/
-void BigFigure::core_IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure & OperandB)
-{
 
+//整数部分加法核心(两正整数相加)
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	//判断内存是否足够
+	int buffer;							//计算时的缓冲区
+	int index_r = result.Detail->IntAllocatedLen - 1, index_A = OperandA.Detail->IntLen - 1, index_B = OperandB.Detail->IntLen - 1;//两个对象正在处理的位的下标
+	char *String1 = OperandA.Detail->NumInt, *String2 = OperandB.Detail->NumInt;
+	int carry = 0;
+
+	if (index_r < index_A || index_r < index_B)
+	{
+		//内存不足以存放,准备报错
+	}
+
+	while (index_A >= 0 && index_B >= 0)
+	{
+		buffer = String1[index_A] + String2[index_B] + carry;
+		if (buffer >= CONST_OVER9)
+		{
+			//大于9,将要进行进位
+			buffer -= 58;//58='9'+1
+			carry = 1;
+		}
+		else
+		{
+			//数字没有大于9,不需要进位
+			buffer -= '0';
+			carry = 0;
+		}
+		result.Detail->StringHead[index_r--] = (char)buffer;
+		index_A--;
+		index_B--;
+	}
+
+	while (carry&&index_A >= 0)
+	{
+		buffer = String1[index_A] + carry;
+		if (buffer >= CONST_OVER9)
+		{
+			//大于9,将要进行进位
+			buffer -= 58;//58='9'+1
+			carry = 1;
+		}
+		else
+		{
+			//数字没有大于9,不需要进位
+			buffer -= '0';
+			carry = 0;
+		}
+		result.Detail->StringHead[index_r--] = (char)buffer;
+		index_A--;
+	}
+	while (carry&&index_B >= 0)
+	{
+		buffer = String2[index_B] + carry;
+		if (buffer >= CONST_OVER9)
+		{
+			//大于9,将要进行进位
+			buffer -= 58;//58='9'+1
+			carry = 1;
+		}
+		else
+		{
+			//数字没有大于9,不需要进位
+			buffer -= '0';
+			carry = 0;
+		}
+		result.Detail->StringHead[index_r--] = (char)buffer;
+		index_B--;
+	}
+
+	while (index_A >= 0)
+		result.Detail->StringHead[index_r--] = String1[index_A--];
+	while (index_B >= 0)
+		result.Detail->StringHead[index_r--] = String2[index_B--];
+	if (carry)
+	{
+		if (index_r >= 0)
+		{
+			result.Detail->StringHead[index_r--] = '1';
+		}
+	}
+	result.Detail->IntLen = result.Detail->IntAllocatedLen - index_r - 1;
+	result.Detail->NumInt = result.Detail->StringHead + index_r + 1;
 }
 
 //打印该对象的详细信息
@@ -175,6 +262,11 @@ BigFigure& BigFigure::operator=(const BigFigure &Source)
 {
 	return CopyDetail(Source);
 }
+BigFigure& BigFigure::operator=(const char* Source)
+{
+	this->toBF(NumStringDetail(std::string(Source)));
+	return *this;
+}
 BigFigure& BigFigure::operator=(const double Source)
 {
 	this->toBF(NumStringDetail(Source));
@@ -195,6 +287,13 @@ BigFigure& BigFigure::operator=(const int Source)
 	this->toBF(NumStringDetail(Source));
 	return *this;
 }
+
+std::ostream & operator<<(std::ostream & out, BigFigure & Source)
+{
+	out << Source.toString() << std::endl;
+	return out;
+}
+
 
 /******************************************************************************************
 对象方法
@@ -742,12 +841,14 @@ bool NumCheck(NumStringDetail &NumDetail)
 				if (Scinotation)
 					NumDetail.ExpStart_p = index_p;
 				else
+					/*
 					if (HasPoint)
 					{
 						//小数点部分,设置小数点后字符串的指针
 						//NumDetail.FloatStart_p = index_p;
 					}
-					else if (IntBeZero)
+					else
+					*/if (!HasPoint&&IntBeZero)
 					{
 						//整数部分,设置第一个有效数字的字符串的指针
 						NumDetail.IntStart_p = index_p;
@@ -889,8 +990,6 @@ bool NumCheck(NumStringDetail &NumDetail)
 			NumDetail.NumString = "0";
 	}
 
-
-
 	//如果是正确的数字, 则可以通过这个for的验证
 	NumDetail.IntBeZero = IntBeZero;
 	if (Scinotation)
@@ -965,7 +1064,7 @@ int BFCmp(const BigFigure &OperandA, const BigFigure &OperandB)
 	//判断位
 	if (OperandA.Detail->IntLen > OperandB.Detail->IntLen)
 	{
-		return 2*minus;
+		return 2 * minus;
 	}
 	else if (OperandA.Detail->IntLen < OperandB.Detail->IntLen)
 	{

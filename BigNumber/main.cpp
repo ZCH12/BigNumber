@@ -120,21 +120,27 @@ int main(int argc, const char * argv[]) {
 	//std::cout << BitCount_check("1230.1E-4", re)<<std::endl;
 	//std::cout << re[0] << "   " << re[1] << std::endl;
 	//std::cout << NumCheck("45.789") << std::endl;
-	ConfirmWontLossAccuracy = true;
+	ConfirmWontLossAccuracy = false;
 	ConfirmWontLossHighBit = true;
 	//ScinotationLen = 11;
 	//ScinotationShow = true;
 
-	BF bf(40, 9),bf2(40,9);
+	BF bf(40, 9),bf2(40,9),bf3(40,9);
+	 bf = "923456789123456789";
+	bf2 = "111111111";
 
-	bf = 123456789123456789;
-	std::cout << bf.toString() << std::endl;;
-	//NumStringDetail n("123456.0000000000000009E5");
-	//bf.toBF(NumStringDetail("0.123456789123456789"));
-	// bf.toBF(NumStringDetail("-1234500000000000000000062.003200021"));
+	core_IntAdd(bf3, bf, bf2);
+	bf3.printDetail();
+	/*
+
 	bf2.toBF(NumStringDetail("-12345000000000000000000620.03200020"));
-
+	bf = bf2;
+	bf.printDetail();
+	bf2.printDetail();
 	std::cout << BFCmp(bf, bf2) << std::endl;
+	
+	std::cout << bf << std::endl;
+	*/
 #if 0
 	bf.toBF(
 		NumStringDetail("-1889001000.333E-2")
