@@ -81,7 +81,6 @@ void test1(std::string testData)
 15673.678E-5 小正负
 -6568.5556E3 小负正
 -76666677.9E-7 小负负
-
 */
 
 void AA(BF a)
@@ -120,25 +119,26 @@ int main(int argc, const char * argv[]) {
 	//std::cout << BitCount_check("1230.1E-4", re)<<std::endl;
 	//std::cout << re[0] << "   " << re[1] << std::endl;
 	//std::cout << NumCheck("45.789") << std::endl;
-	ConfirmWontLossAccuracy = false;
-	ConfirmWontLossHighBit = false;
+	ConfirmWontLossAccuracy = true;
+	ConfirmWontLossHighBit = true;
 	//ScinotationLen = 11;
 	//ScinotationShow = true;
 
-	BF bf(40, 0),bf2(40,0),bf3(40,0);
-	 bf = "999999999999999999999999999999999999999";
-	bf2 = "1";
+	BF bf(40, 0), bf2(40, 0), bf3(40, 0);
+	 bf = "1999";
+	bf2 = "10";
 
-	core_IntAdd(bf3, bf, bf2);
+	
+
+	core_IntAdd(bf3, bf, (long)9456);
+	//std::cout << typeid(int).hash_code() << std::endl;;
 	bf3.printDetail();
 	/*
-
 	bf2.toBF(NumStringDetail("-12345000000000000000000620.03200020"));
 	bf = bf2;
 	bf.printDetail();
 	bf2.printDetail();
 	std::cout << BFCmp(bf, bf2) << std::endl;
-	
 	std::cout << bf << std::endl;
 	*/
 #if 0
@@ -148,16 +148,6 @@ int main(int argc, const char * argv[]) {
 #else
 	//NumStringDetail n("-1889001000");
 #endif
-	//NumStringDetail n1(FormatToString(-45.0000000001));
-	//FormatToString();
-	/*
-	ReserveZero = true;
-	//std::cout<<bf.toString(true,true);
-	AA(bf);
-	std::cout << "main" << std::endl;
-	bf.printDetail();
-	//1.2075877953241088
-	*/
 	system("pause");
 	return 0;
 }

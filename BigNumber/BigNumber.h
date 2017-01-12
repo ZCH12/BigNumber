@@ -94,19 +94,23 @@ public:
 
 	//运算函数
 	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB);
+	//friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const double OperandB);
+	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB);
+	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, int OperandB);
+	friend int core_Float(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB);
 	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);
 	//void core_FloatAdd();
 	//void core_FloatAdd();
 
 	//基础函数
-	void toBF(NumStringDetail &NumStringDetail);							//将其他数据类型写入到当前对象中
+	BigFigure& toBF(NumStringDetail &NumStringDetail);						//将其他数据类型写入到当前对象中
 	std::string toString();													//将当前对象输出为字符串
 	std::string toString(bool UseScinotation, bool ReserveZero);			//将当前对象输出为字符串(通过mode可选择输出模式(正常显示|科学计数法))
-	BigFigure& CopyDetail(const BigFigure &Source);							//将
-	void printDetail();
+	BigFigure& CopyDetail(const BigFigure &Source);							//复制数字的值
+	void printDetail();														//打印数字的详细信息
 
 	//友元函数
-	friend int BFCmp(const BigFigure &OperandA, const BigFigure &OperandB);		//比较两个数字的大小
+	friend int BFCmp(const BigFigure &OperandA, const BigFigure &OperandB);	//比较两个数字的大小
 
 	//重载函数
 	BigFigure& operator=(const BigFigure &Source);

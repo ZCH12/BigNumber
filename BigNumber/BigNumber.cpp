@@ -267,6 +267,82 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure
 
 
 }
+/*
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const double OperandB)
+{
+	BigFigure temp(1050, 1050);
+	core_IntAdd(result, OperandA, temp.toBF(NumStringDetail(OperandB)));
+}
+*/
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB)
+{
+	int index_p = result.Detail->IntAllocatedLen - 1, index_r = OperandA.Detail->IntLen - 1;
+	char *SourceString = OperandA.Detail->NumInt;
+	int buffer, carry = 0;
+	for (; index_r >= 0 && OperandB != 0; index_r--)
+	{
+		buffer = SourceString[index_r];
+		buffer += OperandB % 10 + carry;
+		OperandB /= 10;
+		if (buffer > '9')
+		{
+			buffer -= 10;
+			carry = 1;
+		}
+		else
+		{
+			carry = 0;
+		}
+		result.Detail->StringHead[index_p--] = (char)buffer;
+	}
+
+	if (OperandB != 0)
+	{
+		if (ConfirmWontLossHighBit)
+		{
+			result.Detail->Illage = false;
+			throw BFException(ERR_NUMBERTOOBIG, "数字太大无法存储");
+		}
+	}
+	else {
+			while (carry&&index_p >= 0 && index_r >= 0)
+			{
+				result.Detail->StringHead[index_p] = SourceString[index_r] + carry;
+				if (result.Detail->StringHead[index_p] > '9')
+				{
+					result.Detail->StringHead[index_p] -= 10;
+					carry = 1;
+				}
+				else
+				{
+					carry = 0;
+				}
+				index_p--, index_r--;
+			}
+			if (carry)
+			{
+				result.Detail->StringHead[index_p--] = '1';
+				carry = false;
+			}
+				
+	}
+	while (index_p >= 0 && index_r >= 0)
+		result.Detail->StringHead[index_p--] = SourceString[index_r--];
+
+	result.Detail->IntLen = result.Detail->IntAllocatedLen - index_p-1;
+	result.Detail->NumInt = result.Detail->StringHead + (index_p == -1 ? 0 : index_p)+1;
+	result.Detail->Illage = false;
+}
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, int OperandB)
+{
+
+}
+
+
+int core_Float(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	return 0;
+}
 
 //打印该对象的详细信息
 void BigFigure::printDetail()
@@ -339,7 +415,7 @@ std::ostream & operator<<(std::ostream & out, BigFigure & Source)
 /*
 已完成
 */
-void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
+BigFigure& BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 {
 	int temp;
 	char *tempStr, *SourceStr;
@@ -394,7 +470,7 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 			Detail->Illage = false;
 			if (Detail->Accuracy)
 				Detail->NumFloat[0] = 0;
-			return;
+			return *this;
 		}
 		//以下小数部分的处理
 		if (Detail->Accuracy)
@@ -422,7 +498,7 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 			}
 		}
 		Detail->Illage = false;
-		return;
+		return *this;
 	case 3://科学计数法表示的以整数为底数的数字
 	case 4://科学计数法表示的以小数为底数的数字
 		tempStr = new char[NumStringDetail.NumString.length()]();				//临时存放有效位的字符串
@@ -613,13 +689,14 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 
 		Detail->Illage = true;
 		delete[] tempStr;
-		return;
+		return *this;
 	case 0:
 	default:
 		Detail->Illage = false;
 		throw BFException(ERR_ILLEGALNUMBER, "不是一个合法的数字");
 		break;
 	}
+	return *this;
 }
 
 //将对象中存储的数据转化为字符串,并返回(使用全局设定进行输出)
@@ -848,6 +925,7 @@ BigFigure & BigFigure::CopyDetail(const BigFigure & Source)
 /******************************************************************************************
 基础函数
 *******************************************************************************************/
+
 //检查字符串是否为数字,并且判断字符串表示的是整数还是小数,并且输出长度信息
 /*
 返回值代表的含义如下:
@@ -1081,7 +1159,7 @@ bool NumCheck(NumStringDetail &NumDetail)
 */
 int BFCmp(const BigFigure &OperandA, const BigFigure &OperandB)
 {
-	int minus = 1;
+	int minus = 1;				//当为负数时,返回的结果与正数相反,此变量控制的就是这个因数
 
 	//判断负号
 	if (OperandA.Detail->Minus)
@@ -1150,7 +1228,6 @@ int BFCmp(const BigFigure &OperandA, const BigFigure &OperandB)
 				}
 				return temp*minus;
 			}
-
 		}
 	}
 }
