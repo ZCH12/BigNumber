@@ -121,13 +121,13 @@ int main(int argc, const char * argv[]) {
 	//std::cout << re[0] << "   " << re[1] << std::endl;
 	//std::cout << NumCheck("45.789") << std::endl;
 	ConfirmWontLossAccuracy = false;
-	ConfirmWontLossHighBit = true;
+	ConfirmWontLossHighBit = false;
 	//ScinotationLen = 11;
 	//ScinotationShow = true;
 
-	BF bf(40, 9),bf2(40,9),bf3(40,9);
-	 bf = "923456789123456789";
-	bf2 = "111111111";
+	BF bf(40, 0),bf2(40,0),bf3(40,0);
+	 bf = "999999999999999999999999999999999999999";
+	bf2 = "1";
 
 	core_IntAdd(bf3, bf, bf2);
 	bf3.printDetail();

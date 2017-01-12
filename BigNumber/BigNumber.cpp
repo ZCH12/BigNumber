@@ -147,6 +147,9 @@ BigFigure::~BigFigure()
 ******************************************************************************************/
 
 //整数部分加法核心(两正整数相加)
+/*
+在调用前记得确保数字时有效的
+*/
 void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
 {
 	//判断内存是否足够
@@ -155,9 +158,29 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure
 	char *String1 = OperandA.Detail->NumInt, *String2 = OperandB.Detail->NumInt;
 	int carry = 0;
 
-	if (index_r < index_A || index_r < index_B)
+	if (index_r < index_A)
 	{
 		//内存不足以存放,准备报错
+		if (ConfirmWontLossHighBit)
+			throw BFException(ERR_NUMBERTOOBIG, "操作数A的值太大,无法存储到结果存储的对象中");
+		else
+		{
+			//进行截断
+			String1 += OperandA.Detail->IntLen - result.Detail->IntAllocatedLen;
+			index_A = index_r;
+		}
+	}
+	if (index_r < index_B)
+	{
+		//内存不足以存放,准备报错
+		if (ConfirmWontLossHighBit)
+			throw BFException(ERR_NUMBERTOOBIG, "操作数B的值太大,无法存储到结果存储的对象中");
+		else
+		{
+			//进行截断
+			String2 += OperandB.Detail->IntLen - result.Detail->IntAllocatedLen;
+			index_B = index_r;
+		}
 	}
 
 	while (index_A >= 0 && index_B >= 0)
@@ -183,16 +206,15 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure
 	while (carry&&index_A >= 0)
 	{
 		buffer = String1[index_A] + carry;
-		if (buffer >= CONST_OVER9)
+		if (buffer >= '9')
 		{
 			//大于9,将要进行进位
-			buffer -= 58;//58='9'+1
+			buffer -= 10;
 			carry = 1;
 		}
 		else
 		{
 			//数字没有大于9,不需要进位
-			buffer -= '0';
 			carry = 0;
 		}
 		result.Detail->StringHead[index_r--] = (char)buffer;
@@ -201,16 +223,15 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure
 	while (carry&&index_B >= 0)
 	{
 		buffer = String2[index_B] + carry;
-		if (buffer >= CONST_OVER9)
+		if (buffer >= '9')
 		{
 			//大于9,将要进行进位
-			buffer -= 58;//58='9'+1
+			buffer -= 10;
 			carry = 1;
 		}
 		else
 		{
 			//数字没有大于9,不需要进位
-			buffer -= '0';
 			carry = 0;
 		}
 		result.Detail->StringHead[index_r--] = (char)buffer;
@@ -228,8 +249,23 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure
 			result.Detail->StringHead[index_r--] = '1';
 		}
 	}
+	result.Detail->Illage = false;
 	result.Detail->IntLen = result.Detail->IntAllocatedLen - index_r - 1;
 	result.Detail->NumInt = result.Detail->StringHead + index_r + 1;
+	if (!ConfirmWontLossHighBit)
+	{
+		while (*result.Detail->NumInt == '0')result.Detail->NumInt++;
+		result.Detail->IntLen = result.Detail->IntTail - result.Detail->NumInt;
+		if (result.Detail->IntLen == 0)
+		{
+			result.Detail->IntLen = 1;
+			result.Detail->NumInt = result.Detail->IntTail - 1;
+			result.Detail->NumInt[0] = '0';
+		}
+	}
+
+
+
 }
 
 //打印该对象的详细信息
@@ -356,7 +392,8 @@ void BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 		if (NumStringDetail.Mode == 1)
 		{
 			Detail->Illage = false;
-			Detail->NumFloat[0] = 0;
+			if (Detail->Accuracy)
+				Detail->NumFloat[0] = 0;
 			return;
 		}
 		//以下小数部分的处理
