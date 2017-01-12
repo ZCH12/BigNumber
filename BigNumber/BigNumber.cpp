@@ -150,13 +150,13 @@ BigFigure::~BigFigure()
 /*
 在调用前记得确保数字时有效的
 */
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB,int carry)
 {
 	//判断内存是否足够
 	int buffer;							//计算时的缓冲区
 	int index_r = result.Detail->IntAllocatedLen - 1, index_A = OperandA.Detail->IntLen - 1, index_B = OperandB.Detail->IntLen - 1;//两个对象正在处理的位的下标
 	char *String1 = OperandA.Detail->NumInt, *String2 = OperandB.Detail->NumInt;
-	int carry = 0;
+	//int carry = 0;
 
 	if (index_r < index_A)
 	{
@@ -267,14 +267,8 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure
 
 
 }
-/*
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const double OperandB)
-{
-	BigFigure temp(1050, 1050);
-	core_IntAdd(result, OperandA, temp.toBF(NumStringDetail(OperandB)));
-}
-*/
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB)
+template <class T>
+void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB)
 {
 	int index_p = result.Detail->IntAllocatedLen - 1, index_r = OperandA.Detail->IntLen - 1;
 	char *SourceString = OperandA.Detail->NumInt;
@@ -305,44 +299,197 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB)
 		}
 	}
 	else {
-			while (carry&&index_p >= 0 && index_r >= 0)
+		while (carry&&index_p >= 0 && index_r >= 0)
+		{
+			buffer = SourceString[index_r] + carry;
+			if (buffer > '9')
 			{
-				result.Detail->StringHead[index_p] = SourceString[index_r] + carry;
-				if (result.Detail->StringHead[index_p] > '9')
-				{
-					result.Detail->StringHead[index_p] -= 10;
-					carry = 1;
-				}
-				else
-				{
-					carry = 0;
-				}
-				index_p--, index_r--;
+				buffer -= 10;
+				carry = 1;
 			}
-			if (carry)
+			else
 			{
-				result.Detail->StringHead[index_p--] = '1';
-				carry = false;
+				carry = 0;
 			}
-				
+			result.Detail->StringHead[index_p] = (char)buffer;
+			index_p--, index_r--;
+		}
+		if (carry)
+		{
+			result.Detail->StringHead[index_p--] = '1';
+			carry = false;
+		}
+
 	}
 	while (index_p >= 0 && index_r >= 0)
 		result.Detail->StringHead[index_p--] = SourceString[index_r--];
 
-	result.Detail->IntLen = result.Detail->IntAllocatedLen - index_p-1;
-	result.Detail->NumInt = result.Detail->StringHead + (index_p == -1 ? 0 : index_p)+1;
+	result.Detail->IntLen = result.Detail->IntAllocatedLen - index_p - 1;
+	result.Detail->NumInt = result.Detail->StringHead + (index_p == -1 ? 0 : index_p) + 1;
 	result.Detail->Illage = false;
 }
+/*
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, double OperandB)
+{
+	BigFigure temp(1050, 1050);
+	core_IntAdd(result, OperandA, temp.toBF(NumStringDetail(OperandB)));
+}
+*/
 void core_IntAdd(BigFigure & result, const BigFigure & OperandA, int OperandB)
 {
-
+	core_IntAdd_Basis<int>(result, OperandA, OperandB);
 }
-
-
-int core_Float(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB)
 {
-	return 0;
+	core_IntAdd_Basis<long>(result, OperandA, OperandB);
 }
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, __int64 OperandB)
+{
+	core_IntAdd_Basis<__int64>(result, OperandA, OperandB);
+}
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, short OperandB)
+{
+	core_IntAdd_Basis<short>(result, OperandA, OperandB);
+}
+
+//小数部分加法核心
+int core_FloatAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	int index_A, index_B = strlen(OperandB.Detail->NumFloat);
+	char *String1 = OperandA.Detail->NumFloat, *String2 = OperandB.Detail->NumFloat, *String3 = result.Detail->NumFloat;
+	int buffer;
+	int carry = 0;
+
+	if (OperandA.Detail->Accuracy)
+		index_A = strlen(OperandA.Detail->NumFloat);
+	else index_A = 0;
+
+	if (OperandB.Detail->Accuracy)
+		index_B = strlen(OperandB.Detail->NumFloat);
+	else index_B = 0;
+
+
+	if (index_A < index_B)
+	{
+		//如果A的小数位比B的短
+		String3[index_B--] = 0;
+		if ((int)result.Detail->Accuracy >= index_A)
+		{
+			while (index_B >= index_A)
+			{
+				String3[index_B] = String2[index_B];
+				index_B--;
+			}
+		}
+		else
+		{
+			if (ConfirmWontLossAccuracy)
+			{
+				//报错
+				result.Detail->Illage = true;
+				throw BFException(ERR_MAYACCURACYLOSS, "目标对象太小,无法存储足够的小数位,可能丢失精度");
+			}
+			else {
+				//截断小数位,继续运行
+				index_B = result.Detail->Accuracy;
+				while (index_B >= index_A)
+				{
+					String3[index_B] = String2[index_B];
+					index_B--;
+				}
+			}
+		}
+		index_A = index_B;							//将A,B同步,为下面只使用index_A做准备
+	}
+	else if (index_A > index_B)
+	{
+		//如果A的小数位比B的长
+		String3[index_A--] = 0;
+		if ((int)result.Detail->Accuracy >= index_B)
+		{
+			while (index_A >= index_B)
+			{
+				String3[index_A] = String1[index_A];
+				index_A--;
+			}
+		}
+		else
+		{
+			if (ConfirmWontLossAccuracy)
+			{
+				//报错
+				result.Detail->Illage = true;
+				throw BFException(ERR_MAYACCURACYLOSS, "目标对象太小,无法存储足够的小数位,可能丢失精度");
+			}
+			else {
+				//截断小数位,继续运行
+				index_A = result.Detail->Accuracy;
+				while (index_A <= index_B)
+				{
+					String3[index_A] = String1[index_A];
+					index_A--;
+				}
+			}
+		}
+	}
+	else
+	{
+		String3[index_A--] = 0;
+	}
+	//从这里开始,两个字符串共用一个游标
+	for (; index_A >= 0; index_A--)
+	{
+		buffer = String1[index_A] + String2[index_A] + carry;
+		if (buffer >= CONST_OVER9)
+		{
+			buffer -= 58;
+			carry = 1;
+		}
+		else
+		{
+			buffer -= '0';
+			carry = 0;
+		}
+		String3[index_A] = (char)buffer;
+	}
+
+	return carry;
+}
+
+
+
+//实数加法运算
+/*
+未完成
+*/
+void IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure & OperandB)
+{
+	bool minusA = OperandA.Detail->Minus, minusB = OperandB.Detail->Minus;
+
+	if (!(minusA || minusB))
+	{
+		//正正相加
+		core_IntAdd(result, OperandA, OperandB, core_FloatAdd(result, OperandA, OperandB));
+		result.Detail->Minus = false;
+	}
+	else if (minusA && !minusB)
+	{
+		//负正相加
+	}
+	else if (!minusA&&minusB)
+	{
+		//正负相加
+	}
+	else {
+		//负负相加
+		core_IntAdd(result, OperandA, OperandB, core_FloatAdd(result, OperandA, OperandB));
+		result.Detail->Minus = true;
+	}
+}
+
+
+
+
 
 //打印该对象的详细信息
 void BigFigure::printDetail()
@@ -423,7 +570,7 @@ BigFigure& BigFigure::toBF(NumStringDetail &NumStringDetail) throw(...)
 	int skip;
 	int expon;					//科学计数法的指数部分
 
-	Detail->Minus = (bool)NumStringDetail.RadixMinus;
+	Detail->Minus = NumStringDetail.RadixMinus ? true : false;
 
 	switch (NumStringDetail.Mode)
 	{

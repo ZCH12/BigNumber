@@ -93,11 +93,23 @@ public:
 	~BigFigure();
 
 	//运算函数
-	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB);
-	//friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const double OperandB);
+
+	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int carry);
+	template <class T> friend void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB);
+	friend int core_FloatAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB);
+
+
+
+	//friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, double OperandB);
+	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, __int64 OperandB);
 	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB);
 	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, int OperandB);
-	friend int core_Float(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB);
+	//friend void core_FloatAdd(BigFigure & result, const BigFigure & OperandA, double OperandB);
+
+	friend void IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure & OperandB);
+
+
+
 	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);
 	//void core_FloatAdd();
 	//void core_FloatAdd();
@@ -119,7 +131,7 @@ public:
 	BigFigure& operator=(const __int64 Source);
 	BigFigure& operator=(const long Source);
 	BigFigure& operator=(const int Source);
-	friend std::ostream& operator<<( std::ostream& out,BigFigure& Source);
+	friend std::ostream& operator<<(std::ostream& out, BigFigure& Source);
 };
 
 typedef BigFigure BF;
@@ -129,3 +141,4 @@ typedef BigFigure BF;
 */
 bool NumCheck(NumStringDetail &NumDetail);									//检查字符串是否为合法数字,并返回数字的类型
 #endif
+
