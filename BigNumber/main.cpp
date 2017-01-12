@@ -125,11 +125,11 @@ int main(int argc, const char * argv[]) {
 	//ScinotationShow = true;
 
 	BF bf(40,10), bf2(40, 10), bf3(40, 10);
-	bf = "-10.9";
-	 bf2 = "-1999.15656";
+	bf = -10.9;
+	 bf2 = "1999.15656";
 
 	
-	 IntAdd(bf3, bf, bf2);
+	 IntAdd(bf3, bf, -456.11111);
 
 	//core_IntAdd(bf3, bf, 45.5);
 	//std::cout << typeid(int).hash_code() << std::endl;;

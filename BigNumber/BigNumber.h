@@ -107,7 +107,7 @@ public:
 	//friend void core_FloatAdd(BigFigure & result, const BigFigure & OperandA, double OperandB);
 
 	friend void IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure & OperandB);
-
+	friend void IntAdd(BigFigure & result, BigFigure & OperandA, double OperandB);
 
 
 	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);

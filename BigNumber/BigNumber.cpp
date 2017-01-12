@@ -271,7 +271,7 @@ template <class T>
 void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB)
 {
 	int index_p = result.Detail->IntAllocatedLen - 1, index_r = OperandA.Detail->IntLen - 1;
-	char *SourceString = OperandA.Detail->NumInt;
+	char *SourceString = OperandA.Detail->NumInt, *String3 = result.Detail->StringHead;
 	int buffer, carry = 0;
 	for (; index_r >= 0 && OperandB != 0; index_r--)
 	{
@@ -287,7 +287,7 @@ void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T Operand
 		{
 			carry = 0;
 		}
-		result.Detail->StringHead[index_p--] = (char)buffer;
+		String3[index_p--] = (char)buffer;
 	}
 
 	if (OperandB != 0)
@@ -311,21 +311,21 @@ void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T Operand
 			{
 				carry = 0;
 			}
-			result.Detail->StringHead[index_p] = (char)buffer;
+			String3[index_p] = (char)buffer;
 			index_p--, index_r--;
 		}
 		if (carry)
 		{
-			result.Detail->StringHead[index_p--] = '1';
+			String3[index_p--] = '1';
 			carry = false;
 		}
 
 	}
 	while (index_p >= 0 && index_r >= 0)
-		result.Detail->StringHead[index_p--] = SourceString[index_r--];
+		String3[index_p--] = SourceString[index_r--];
 
 	result.Detail->IntLen = result.Detail->IntAllocatedLen - index_p - 1;
-	result.Detail->NumInt = result.Detail->StringHead + (index_p == -1 ? 0 : index_p) + 1;
+	result.Detail->NumInt = String3 + (index_p == -1 ? 0 : index_p) + 1;
 	result.Detail->Illage = false;
 }
 /*
@@ -486,7 +486,15 @@ void IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure & OperandB)
 		result.Detail->Minus = true;
 	}
 }
-
+/*
+等待
+*/
+void IntAdd(BigFigure & result, BigFigure & OperandA, double OperandB)
+{
+	BigFigure temp(1050, 1050);
+	temp.toBF(NumStringDetail(OperandB));
+	IntAdd(result,OperandA, temp);
+}
 
 
 
