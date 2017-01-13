@@ -95,10 +95,10 @@ public:
 	//运算函数
 
 	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int carry);
-	template <class T> friend void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB);
+	template <class T> friend void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB, int carry);
 	friend int core_FloatAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB);
-
-
+	friend void core_IntSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int borrow);
+	friend void core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB);
 
 	//friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, double OperandB);
 	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, __int64 OperandB);
@@ -132,6 +132,11 @@ public:
 	BigFigure& operator=(const long Source);
 	BigFigure& operator=(const int Source);
 	friend std::ostream& operator<<(std::ostream& out, BigFigure& Source);
+	friend bool operator<(const BigFigure& OperandA, const BigFigure&OperandB);
+	friend bool operator>(const BigFigure& OperandA, const BigFigure&OperandB);
+	friend bool operator==(const BigFigure& OperandA, const BigFigure&OperandB);
+	friend bool operator<=(const BigFigure& OperandA, const BigFigure&OperandB);
+	friend bool operator>=(const BigFigure& OperandA, const BigFigure&OperandB);
 };
 
 typedef BigFigure BF;

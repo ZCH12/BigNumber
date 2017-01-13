@@ -124,31 +124,17 @@ int main(int argc, const char * argv[]) {
 	//ScinotationLen = 11;
 	//ScinotationShow = true;
 
-	BF bf(40,10), bf2(40, 10), bf3(40, 10);
-	bf = -10.9;
-	 bf2 = "1999.15656";
-
+	BF bf(40,10), bf2(40, 10), bf3(5, 10);
+	bf = 233.1133789;
+	bf2 = "1234.1133";
+	std::cout << (bf == bf2) << std::endl;
 	
-	 IntAdd(bf3, bf, -456.11111);
-
-	//core_IntAdd(bf3, bf, 45.5);
-	//std::cout << typeid(int).hash_code() << std::endl;;
+	 //IntAdd(bf3, bf, -456.11111);
+	 //core_IntSub(bf3, bf2, bf,0);
+	core_FloatSub(bf3, bf2, bf);
+	//IntAdd(bf3, bf, bf2);
 	bf3.printDetail();
-	/*
-	bf2.toBF(NumStringDetail("-12345000000000000000000620.03200020"));
-	bf = bf2;
-	bf.printDetail();
-	bf2.printDetail();
-	std::cout << BFCmp(bf, bf2) << std::endl;
-	std::cout << bf << std::endl;
-	*/
-#if 0
-	bf.toBF(
-		NumStringDetail("-1889001000.333E-2")
-	);
-#else
-	//NumStringDetail n("-1889001000");
-#endif
+
 	system("pause");
 	return 0;
 }

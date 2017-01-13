@@ -150,7 +150,7 @@ BigFigure::~BigFigure()
 /*
 在调用前记得确保数字时有效的
 */
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB,int carry)
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int carry)
 {
 	//判断内存是否足够
 	int buffer;							//计算时的缓冲区
@@ -268,11 +268,11 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure
 
 }
 template <class T>
-void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB)
+void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB, int carry)
 {
 	int index_p = result.Detail->IntAllocatedLen - 1, index_r = OperandA.Detail->IntLen - 1;
 	char *SourceString = OperandA.Detail->NumInt, *String3 = result.Detail->StringHead;
-	int buffer, carry = 0;
+	int buffer;
 	for (; index_r >= 0 && OperandB != 0; index_r--)
 	{
 		buffer = SourceString[index_r];
@@ -328,31 +328,6 @@ void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T Operand
 	result.Detail->NumInt = String3 + (index_p == -1 ? 0 : index_p) + 1;
 	result.Detail->Illage = false;
 }
-/*
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, double OperandB)
-{
-	BigFigure temp(1050, 1050);
-	core_IntAdd(result, OperandA, temp.toBF(NumStringDetail(OperandB)));
-}
-*/
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, int OperandB)
-{
-	core_IntAdd_Basis<int>(result, OperandA, OperandB);
-}
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB)
-{
-	core_IntAdd_Basis<long>(result, OperandA, OperandB);
-}
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, __int64 OperandB)
-{
-	core_IntAdd_Basis<__int64>(result, OperandA, OperandB);
-}
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, short OperandB)
-{
-	core_IntAdd_Basis<short>(result, OperandA, OperandB);
-}
-
-//小数部分加法核心
 int core_FloatAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
 {
 	int index_A, index_B = strlen(OperandB.Detail->NumFloat);
@@ -456,6 +431,149 @@ int core_FloatAdd(BigFigure & result, const BigFigure & OperandA, const BigFigur
 	return carry;
 }
 
+void core_IntSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int borrow)
+{
+	int buffer;
+	char *String1 = OperandA.Detail->NumInt, *String2 = OperandB.Detail->NumInt, *String3 = new char[OperandA.Detail->IntLen + 1];
+	int index_A = OperandA.Detail->IntLen - 1, index_B = OperandB.Detail->IntLen - 1;
+	String3[OperandA.Detail->IntLen] = 0;		//写入结束符
+
+	while (index_A >= 0 && index_B >= 0)
+	{
+		//从尾部开始,读取都有数字的位
+		buffer = String1[index_A] - String2[index_B--] - borrow;
+		if (buffer < 0)
+		{
+			buffer += 58;
+			borrow = 1;
+		}
+		else
+		{
+			buffer += '0';
+			borrow = 0;
+		}
+		String3[index_A--] = (char)buffer;
+	}
+
+	while (borrow&&index_A >= 0)	//处理借位
+	{
+		buffer = String1[index_A] - borrow;
+		if (buffer < '0')
+		{
+			buffer += 10;
+			borrow = 1;
+		}
+		else
+		{
+			borrow = 0;
+		}
+		String3[index_A--] = (char)buffer;
+	}
+	while (index_A >= 0) //复制剩下的项
+	{
+		String3[index_A] = String1[index_A];
+		index_A--;
+	}
+	index_A++;
+	while (String3[index_A] == '0')	//去除结果前面多余的0
+		index_A++;
+	if (String3[index_A] == 0)		//防止结果为空,使得最小值为0
+		index_A--;
+	result.Detail->IntLen = OperandA.Detail->IntLen - index_A;
+
+	if (result.Detail->IntLen > result.Detail->IntAllocatedLen)
+	{
+		//结果太长,不足以存储,将抛出异常
+		if (ConfirmWontLossHighBit)
+		{
+			result.Detail->Illage = true;
+			delete[] String3;
+			throw BFException(ERR_NUMBERTOOBIG, "操作数A太大");
+		}
+		else
+		{
+			//切断式复制
+			result.Detail->NumInt = result.Detail->StringHead;
+			strncpy(result.Detail->NumInt, String3 + result.Detail->IntLen - result.Detail->IntAllocatedLen, result.Detail->IntAllocatedLen);
+			result.Detail->IntLen = result.Detail->IntAllocatedLen;
+		}
+	}
+	else
+	{
+		result.Detail->NumInt = result.Detail->IntTail - result.Detail->IntLen;
+		strcpy(result.Detail->NumInt, String3 + index_A);
+	}
+	delete[] String3;
+	result.Detail->Illage = false;
+	return;
+}
+void core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	//分两种情况
+	//1.A比B长
+	//2.A比B短
+	int borrow = 0;
+	char *String1 = OperandA.Detail->NumFloat, *String2 = OperandB.Detail->NumFloat;
+	int index_A = strlen(String1), index_B = strlen(String2);
+
+
+	char *String3 = new char[index_A > index_B ? index_A : index_B + 1];
+
+
+	//先处理长度不相等的部分
+	if (index_A > index_B)
+	{
+		//如果长度A>B
+		strncpy(String3 + index_B, String1 + index_B, index_A - index_B);	//将多出的位复制下来
+		index_A = index_B - 1;
+	}
+	else if (index_A < index_B)
+	{
+		//如果长度B>A
+		index_A--;
+		index_B--;
+		while (index_B > index_A)
+		{
+			String3[index_B] = (char)(106 - String2[index_B] - borrow);
+			borrow = 1;
+			index_B--;
+		}
+	}
+
+
+
+
+	delete[] String3;
+	return;
+}
+
+
+
+/*
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, double OperandB)
+{
+	BigFigure temp(1050, 1050);
+	core_IntAdd(result, OperandA, temp.toBF(NumStringDetail(OperandB)));
+}
+*/
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, int OperandB)
+{
+	core_IntAdd_Basis<int>(result, OperandA, OperandB, 0);
+}
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB)
+{
+	core_IntAdd_Basis<long>(result, OperandA, OperandB, 0);
+}
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, __int64 OperandB)
+{
+	core_IntAdd_Basis<__int64>(result, OperandA, OperandB, 0);
+}
+void core_IntAdd(BigFigure & result, const BigFigure & OperandA, short OperandB)
+{
+	core_IntAdd_Basis<short>(result, OperandA, OperandB, 0);
+}
+
+
 
 
 //实数加法运算
@@ -493,7 +611,7 @@ void IntAdd(BigFigure & result, BigFigure & OperandA, double OperandB)
 {
 	BigFigure temp(1050, 1050);
 	temp.toBF(NumStringDetail(OperandB));
-	IntAdd(result,OperandA, temp);
+	IntAdd(result, OperandA, temp);
 }
 
 
@@ -555,11 +673,39 @@ BigFigure& BigFigure::operator=(const int Source)
 	return *this;
 }
 
+
+
 std::ostream & operator<<(std::ostream & out, BigFigure & Source)
 {
 	out << Source.toString() << std::endl;
 	return out;
 }
+
+bool operator<(const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	return BFCmp(OperandA, OperandB) < 0;
+}
+
+bool operator>(const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	return BFCmp(OperandA, OperandB) > 0;
+}
+
+bool operator==(const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	return BFCmp(OperandA, OperandB) == 0;
+}
+
+bool operator<=(const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	return BFCmp(OperandA, OperandB) <= 0;
+}
+bool operator>=(const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	return BFCmp(OperandA, OperandB) >= 0;
+}
+
+//比较大小的函数
 
 
 /******************************************************************************************
@@ -1111,14 +1257,7 @@ bool NumCheck(NumStringDetail &NumDetail)
 				if (Scinotation)
 					NumDetail.ExpStart_p = index_p;
 				else
-					/*
-					if (HasPoint)
-					{
-						//小数点部分,设置小数点后字符串的指针
-						//NumDetail.FloatStart_p = index_p;
-					}
-					else
-					*/if (!HasPoint&&IntBeZero)
+					if (!HasPoint&&IntBeZero)
 					{
 						//整数部分,设置第一个有效数字的字符串的指针
 						NumDetail.IntStart_p = index_p;
@@ -1131,9 +1270,8 @@ bool NumCheck(NumStringDetail &NumDetail)
 		}
 		else if (tempString[index_p] == '0')
 		{
-			//if (HasPoint && !(IntBeZero || HasNumPre))
-
-			if (HasPoint && !HasNumPre)
+			//if (HasPoint && !HasNumPre)
+			if (HasPoint)
 			{
 				//整数不为0,且前面没有数字(当整数有有效数字时,小数点后的0不能省略)
 				HasNumPre = true;
@@ -1251,16 +1389,27 @@ bool NumCheck(NumStringDetail &NumDetail)
 		}
 	}
 
-	if (!HasNumPre && !HasPoint)
+	if (HasPoint)
 	{
-		//单独处理0
+		while (NumDetail.FloatLen&&tempString[NumDetail.FloatStart_p + NumDetail.FloatLen] == '0')	//去除小数点后的'0'
+			NumDetail.FloatLen--;
+	}
+	if ((!NumDetail.FloatLen&&IntBeZero) || !(HasNumPre || HasPoint))
+	{
+		//数字为0
+		//两种情况:
+		//1.小数为0
+		//2.整数为0
 		NumDetail.IntStart_p = 0;
 		NumDetail.IntLen = 1;
-		if (NumDetail.NumString.empty())	//为空字符串时把字符串初始化为0
+		NumDetail.RadixMinus = false;
+		if (NumDetail.NumString.empty())
+		{
+			//为空字符串时把字符串初始化为0
 			NumDetail.NumString = "0";
+		}
 	}
 
-	//如果是正确的数字, 则可以通过这个for的验证
 	NumDetail.IntBeZero = IntBeZero;
 	if (Scinotation)
 	{
