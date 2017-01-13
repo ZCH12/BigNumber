@@ -185,7 +185,7 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure
 
 	while (index_A >= 0 && index_B >= 0)
 	{
-		buffer = String1[index_A] + String2[index_B] + carry;
+		buffer = (int)String1[index_A] + String2[index_B] + carry;
 		if (buffer >= CONST_OVER9)
 		{
 			//大于9,将要进行进位
@@ -414,7 +414,7 @@ int core_FloatAdd(BigFigure & result, const BigFigure & OperandA, const BigFigur
 	//从这里开始,两个字符串共用一个游标
 	for (; index_A >= 0; index_A--)
 	{
-		buffer = String1[index_A] + String2[index_A] + carry;
+		buffer = (int)String1[index_A] + String2[index_A] + carry;
 		if (buffer >= CONST_OVER9)
 		{
 			buffer -= 58;
@@ -441,7 +441,7 @@ void core_IntSub(BigFigure & result, const BigFigure & OperandA, const BigFigure
 	while (index_A >= 0 && index_B >= 0)
 	{
 		//从尾部开始,读取都有数字的位
-		buffer = String1[index_A] - String2[index_B--] - borrow;
+		buffer = (int)String1[index_A] - String2[index_B--] - borrow;
 		if (buffer < 0)
 		{
 			buffer += 58;
@@ -507,7 +507,7 @@ void core_IntSub(BigFigure & result, const BigFigure & OperandA, const BigFigure
 	result.Detail->Illage = false;
 	return;
 }
-void core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
+int core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
 {
 	//分两种情况
 	//1.A比B长
@@ -515,10 +515,10 @@ void core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigu
 	int borrow = 0;
 	char *String1 = OperandA.Detail->NumFloat, *String2 = OperandB.Detail->NumFloat;
 	int index_A = strlen(String1), index_B = strlen(String2);
-
-
-	char *String3 = new char[index_A > index_B ? index_A : index_B + 1];
-
+	int buffer;
+	int index_r = index_A > index_B ? index_A : index_B;
+	char *String3 = new char[index_r + 1];
+	String3[index_r--] = 0;
 
 	//先处理长度不相等的部分
 	if (index_A > index_B)
@@ -540,8 +540,36 @@ void core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigu
 		}
 	}
 
+	//处理长度相等的部分
+	while (index_A >= 0)
+	{
+		buffer = (int)String1[index_A] - String2[index_A] - borrow;
+		if (buffer < 0)
+		{
+			//需要借位
+			buffer += 58;
+			borrow = 1;
+		}
+		else
+		{
+			buffer += '0';
+			borrow = 0;
+		}
+		String3[index_A--] = (char)buffer;
+	}
 
+	while (String3[index_r] == '0')
+		index_r--;
+	String3[++index_r] = 0;
 
+	if (index_r > result.Detail->Accuracy&&ConfirmWontLossAccuracy)
+	{
+		result.Detail->Illage = true;
+		throw BFException(ERR_MAYACCURACYLOSS, "result容量不足以存放小数");
+	}
+
+	result.Detail->Illage = false;
+	strncpy(result.Detail->NumFloat, String3, result.Detail->Accuracy);
 
 	delete[] String3;
 	return;

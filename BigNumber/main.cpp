@@ -126,7 +126,7 @@ int main(int argc, const char * argv[]) {
 
 	BF bf(40,10), bf2(40, 10), bf3(5, 10);
 	bf = 233.1133789;
-	bf2 = "1234.1133";
+	bf2 = "1234.1134";
 	std::cout << (bf == bf2) << std::endl;
 	
 	 //IntAdd(bf3, bf, -456.11111);
