@@ -150,7 +150,7 @@ BigFigure::~BigFigure()
 /*
 在调用前记得确保数字时有效的
 */
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int carry)
+BigFigure& core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int carry)
 {
 	//判断内存是否足够
 	int buffer;							//计算时的缓冲区
@@ -263,12 +263,12 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure
 			result.Detail->NumInt[0] = '0';
 		}
 	}
-
+	return result;
 
 
 }
 template <class T>
-void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB, int carry)
+BigFigure& core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB, int carry)
 {
 	int index_p = result.Detail->IntAllocatedLen - 1, index_r = OperandA.Detail->IntLen - 1;
 	char *SourceString = OperandA.Detail->NumInt, *String3 = result.Detail->StringHead;
@@ -327,6 +327,7 @@ void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T Operand
 	result.Detail->IntLen = result.Detail->IntAllocatedLen - index_p - 1;
 	result.Detail->NumInt = String3 + (index_p == -1 ? 0 : index_p) + 1;
 	result.Detail->Illage = false;
+	return result;
 }
 int core_FloatAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
 {
@@ -431,7 +432,7 @@ int core_FloatAdd(BigFigure & result, const BigFigure & OperandA, const BigFigur
 	return carry;
 }
 
-void core_IntSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int borrow)
+BigFigure& core_IntSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int borrow)
 {
 	int buffer;
 	char *String1 = OperandA.Detail->NumInt, *String2 = OperandB.Detail->NumInt, *String3 = new char[OperandA.Detail->IntLen + 1];
@@ -505,7 +506,7 @@ void core_IntSub(BigFigure & result, const BigFigure & OperandA, const BigFigure
 	}
 	delete[] String3;
 	result.Detail->Illage = false;
-	return;
+	return result;
 }
 int core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
 {
@@ -562,7 +563,7 @@ int core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigur
 		index_r--;
 	String3[++index_r] = 0;
 
-	if (index_r > result.Detail->Accuracy&&ConfirmWontLossAccuracy)
+	if (index_r > (int)result.Detail->Accuracy&&ConfirmWontLossAccuracy)
 	{
 		result.Detail->Illage = true;
 		throw BFException(ERR_MAYACCURACYLOSS, "result容量不足以存放小数");
@@ -572,7 +573,7 @@ int core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigur
 	strncpy(result.Detail->NumFloat, String3, result.Detail->Accuracy);
 
 	delete[] String3;
-	return;
+	return borrow;
 }
 
 
@@ -584,21 +585,21 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, double OperandB
 	core_IntAdd(result, OperandA, temp.toBF(NumStringDetail(OperandB)));
 }
 */
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, int OperandB)
+BigFigure& core_IntAdd(BigFigure & result, const BigFigure & OperandA, int OperandB)
 {
-	core_IntAdd_Basis<int>(result, OperandA, OperandB, 0);
+	return core_IntAdd_Basis<int>(result, OperandA, OperandB, 0);
 }
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB)
+BigFigure& core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB)
 {
-	core_IntAdd_Basis<long>(result, OperandA, OperandB, 0);
+	return core_IntAdd_Basis<long>(result, OperandA, OperandB, 0);
 }
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, __int64 OperandB)
+BigFigure& core_IntAdd(BigFigure & result, const BigFigure & OperandA, __int64 OperandB)
 {
-	core_IntAdd_Basis<__int64>(result, OperandA, OperandB, 0);
+	return core_IntAdd_Basis<__int64>(result, OperandA, OperandB, 0);
 }
-void core_IntAdd(BigFigure & result, const BigFigure & OperandA, short OperandB)
+BigFigure& core_IntAdd(BigFigure & result, const BigFigure & OperandA, short OperandB)
 {
-	core_IntAdd_Basis<short>(result, OperandA, OperandB, 0);
+	return core_IntAdd_Basis<short>(result, OperandA, OperandB, 0);
 }
 
 
@@ -608,7 +609,7 @@ void core_IntAdd(BigFigure & result, const BigFigure & OperandA, short OperandB)
 /*
 未完成
 */
-void IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure & OperandB)
+BigFigure& BFAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
 {
 	bool minusA = OperandA.Detail->Minus, minusB = OperandB.Detail->Minus;
 
@@ -621,27 +622,107 @@ void IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure & OperandB)
 	else if (minusA && !minusB)
 	{
 		//负正相加
+		if (BFCmp_abs(OperandA, OperandB, 1) > 0)
+		{
+			//-5+3=-2
+			core_IntSub(result, OperandA, OperandB, core_FloatSub(result, OperandA, OperandB));
+			result.Detail->Minus = true;
+		}
+		else
+		{
+			//-2+5=3
+			core_IntSub(result, OperandB, OperandA, core_FloatSub(result, OperandB, OperandA));
+			result.Detail->Minus = false;
+		}
 	}
 	else if (!minusA&&minusB)
 	{
 		//正负相加
+		if (BFCmp_abs(OperandA, OperandB, 1) >= 0)
+		{
+			//5-3=2
+			core_IntSub(result, OperandA, OperandB, core_FloatSub(result, OperandA, OperandB));
+			result.Detail->Minus = false;
+		}
+		else
+		{
+			//2-5=3
+			core_IntSub(result, OperandB, OperandA, core_FloatSub(result, OperandB, OperandA));
+			result.Detail->Minus = true;
+		}
 	}
 	else {
 		//负负相加
 		core_IntAdd(result, OperandA, OperandB, core_FloatAdd(result, OperandA, OperandB));
 		result.Detail->Minus = true;
 	}
+	return result;
+}
+
+BigFigure& BFSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	bool minusA = OperandA.Detail->Minus, minusB = OperandB.Detail->Minus;
+
+	if (!(minusA || minusB))
+	{
+		//正正相减
+		if (BFCmp_abs(OperandA, OperandB, 1) >= 0)
+		{
+			//5-3=2
+			core_IntSub(result, OperandA, OperandB, core_FloatSub(result, OperandA, OperandB));
+			result.Detail->Minus = false;
+		}
+		else
+		{
+			core_IntSub(result, OperandB, OperandA, core_FloatSub(result, OperandB, OperandA));
+			result.Detail->Minus = true;
+		}
+	}
+	else if (minusA && !minusB)
+	{
+		//负正相减
+		core_IntAdd(result, OperandA, OperandB, core_FloatAdd(result, OperandA, OperandB));
+		result.Detail->Minus = true;
+	}
+	else if (!minusA&&minusB)
+	{
+		//正负相减
+		core_IntAdd(result, OperandA, OperandB, core_FloatAdd(result, OperandA, OperandB));
+		result.Detail->Minus = false;
+	}
+	else {
+		//负负相减
+		if (BFCmp_abs(OperandA, OperandB, 1) > 0)
+		{
+			//-5+2=-3
+			core_IntSub(result, OperandA, OperandB, core_FloatSub(result, OperandA, OperandB));
+			result.Detail->Minus = true;
+		}
+		else
+		{
+			core_IntSub(result, OperandB, OperandA, core_FloatSub(result, OperandB, OperandA));
+			result.Detail->Minus = false;
+		}
+	}
+	return result;
 }
 /*
-等待
+等待负数判断
 */
-void IntAdd(BigFigure & result, BigFigure & OperandA, double OperandB)
+BigFigure& BFAdd(BigFigure & result, BigFigure & OperandA, double OperandB)
 {
 	BigFigure temp(1050, 1050);
 	temp.toBF(NumStringDetail(OperandB));
-	IntAdd(result, OperandA, temp);
+	BFAdd(result, OperandA, temp);
+	return result;
 }
-
+BigFigure& BFSub(BigFigure & result, BigFigure & OperandA, double OperandB)
+{
+	BigFigure temp(1050, 1050);
+	temp.toBF(NumStringDetail(OperandB));
+	BFSub(result, OperandA, temp);
+	return result;
+}
 
 
 
@@ -702,6 +783,42 @@ BigFigure& BigFigure::operator=(const int Source)
 }
 
 
+
+BigFigure operator+(const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	BigFigure temp((OperandA.Detail->IntLen > OperandB.Detail->IntLen ? OperandA.Detail->IntLen : OperandB.Detail->IntLen) + 1,
+		OperandA.Detail->Accuracy > OperandB.Detail->Accuracy ? OperandA.Detail->Accuracy : OperandB.Detail->Accuracy);
+	BFAdd(temp, OperandA, OperandB);
+	return temp;
+}
+
+BigFigure operator+(const BigFigure & OperandA,const double OperandB)
+{
+	BigFigure B(1050, 1050);
+	B.toBF(NumStringDetail(OperandB));
+	BigFigure temp((OperandA.Detail->IntLen > B.Detail->IntLen ? OperandA.Detail->IntLen : B.Detail->IntLen) + 1,
+		OperandA.Detail->Accuracy > B.Detail->Accuracy ? OperandA.Detail->Accuracy : B.Detail->Accuracy);
+	BFAdd(temp, OperandA, B);
+	return temp;
+}
+
+BigFigure operator-(const BigFigure & OperandA, const BigFigure & OperandB)
+{
+	BigFigure temp(OperandA.Detail->IntLen > OperandB.Detail->IntLen ? OperandA.Detail->IntLen : OperandB.Detail->IntLen,
+		OperandA.Detail->Accuracy > OperandB.Detail->Accuracy ? OperandA.Detail->Accuracy : OperandB.Detail->Accuracy);
+	BFSub(temp, OperandA, OperandB);
+	return temp;
+}
+
+BigFigure operator-(const BigFigure & OperandA, const double OperandB)
+{
+	BigFigure B(1050, 1050);
+	B.toBF(NumStringDetail(OperandB));
+	BigFigure temp(OperandA.Detail->IntLen > B.Detail->IntLen ? OperandA.Detail->IntLen : B.Detail->IntLen,
+		OperandA.Detail->Accuracy > B.Detail->Accuracy ? OperandA.Detail->Accuracy : B.Detail->Accuracy);
+	BFSub(temp, OperandA, B);
+	return temp;
+}
 
 std::ostream & operator<<(std::ostream & out, BigFigure & Source)
 {
@@ -1507,7 +1624,18 @@ int BFCmp(const BigFigure &OperandA, const BigFigure &OperandB)
 			return 2;//A正B负
 		//minus默认为1,不需要改动
 	}
+	return BFCmp_abs(OperandA, OperandB, minus);
 
+}
+int BFCmp_abs(const BigFigure &OperandA, const BigFigure &OperandB)
+{
+	return BFCmp_abs(OperandA, OperandB, 1);
+}
+/*
+比较两个数的绝对值大小
+*/
+int BFCmp_abs(const BigFigure &OperandA, const BigFigure &OperandB, int minus)
+{
 	//判断位
 	if (OperandA.Detail->IntLen > OperandB.Detail->IntLen)
 	{

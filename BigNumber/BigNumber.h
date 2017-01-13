@@ -85,6 +85,10 @@ private:
 		char *NumFloat;         //可输出的浮点数部分的字符串的首地址
 		char *StringHead;       //保存申请的字符串空间的首指针
 	} *Detail;
+
+
+	friend int BFCmp_abs(const BigFigure &OperandA, const BigFigure &OperandB, int minus);	//比较两个数的绝对值大小
+
 public:
 	//构造器与析构器
 	//BigFigure();
@@ -94,21 +98,22 @@ public:
 
 	//运算函数
 
-	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int carry);
-	template <class T> friend void core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB, int carry);
+	friend BigFigure& core_IntAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int carry);
+	template <class T> friend BigFigure& core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB, int carry);
 	friend int core_FloatAdd(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB);
-	friend void core_IntSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int borrow);
+	friend BigFigure& core_IntSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB, int borrow);
 	friend int core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB);
 
 	//friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, double OperandB);
-	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, __int64 OperandB);
-	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB);
-	friend void core_IntAdd(BigFigure & result, const BigFigure & OperandA, int OperandB);
+	friend BigFigure& core_IntAdd(BigFigure & result, const BigFigure & OperandA, __int64 OperandB);
+	friend BigFigure& core_IntAdd(BigFigure & result, const BigFigure & OperandA, long OperandB);
+	friend BigFigure& core_IntAdd(BigFigure & result, const BigFigure & OperandA, int OperandB);
 	//friend void core_FloatAdd(BigFigure & result, const BigFigure & OperandA, double OperandB);
 
-	friend void IntAdd(BigFigure & result, BigFigure & OperandA, BigFigure & OperandB);
-	friend void IntAdd(BigFigure & result, BigFigure & OperandA, double OperandB);
-
+	friend BigFigure& BFAdd(BigFigure & result,const BigFigure & OperandA, const BigFigure & OperandB);
+	friend BigFigure& BFAdd(BigFigure & result, BigFigure & OperandA, double OperandB);
+	friend BigFigure& BFSub(BigFigure & result, const BigFigure & OperandA,const BigFigure & OperandB);
+	friend BigFigure& BFSub(BigFigure & result, BigFigure & OperandA, double OperandB);
 
 	//void core_IntAdd(BigFigure &result, BigFigure &OperandA, int OperandB);
 	//void core_FloatAdd();
@@ -122,7 +127,8 @@ public:
 	void printDetail();														//打印数字的详细信息
 
 	//友元函数
-	friend int BFCmp(const BigFigure &OperandA, const BigFigure &OperandB);	//比较两个数字的大小
+	friend int BFCmp(const BigFigure &OperandA, const BigFigure &OperandB);		//比较两个数字的大小
+	friend int BFCmp_abs(const BigFigure &OperandA, const BigFigure &OperandB);	//比较两个数的绝对值大小
 
 	//重载函数
 	BigFigure& operator=(const BigFigure &Source);
@@ -131,6 +137,14 @@ public:
 	BigFigure& operator=(const __int64 Source);
 	BigFigure& operator=(const long Source);
 	BigFigure& operator=(const int Source);
+
+	friend BigFigure operator+(const BigFigure &OperandA,const BigFigure &OperandB);
+	friend BigFigure operator+(const BigFigure &OperandA, const double OperandB);
+
+
+	friend BigFigure operator-(const BigFigure & OperandA, const BigFigure & OperandB);
+	friend BigFigure operator-(const BigFigure & OperandA, const double OperandB);
+
 	friend std::ostream& operator<<(std::ostream& out, BigFigure& Source);
 	friend bool operator<(const BigFigure& OperandA, const BigFigure&OperandB);
 	friend bool operator>(const BigFigure& OperandA, const BigFigure&OperandB);

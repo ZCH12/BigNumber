@@ -124,15 +124,13 @@ int main(int argc, const char * argv[]) {
 	//ScinotationLen = 11;
 	//ScinotationShow = true;
 
-	BF bf(40,10), bf2(40, 10), bf3(5, 10);
-	bf = 233.1133789;
-	bf2 = "1234.1134";
-	std::cout << (bf == bf2) << std::endl;
-	
-	 //IntAdd(bf3, bf, -456.11111);
-	 //core_IntSub(bf3, bf2, bf,0);
-	core_FloatSub(bf3, bf2, bf);
-	//IntAdd(bf3, bf, bf2);
+	BF bf(40,10), bf2(40, 10), bf3(10, 10);
+
+	bf = -2339.23;
+	bf2 = "551234.0036";
+
+	//std::cout << (bf + bf2) << std::endl;
+	bf3 = bf - 1.2;
 	bf3.printDetail();
 
 	system("pause");
