@@ -267,8 +267,7 @@ BigFigure& core_IntAdd(BigFigure & result, const BigFigure & OperandA, const Big
 
 
 }
-template <class T>
-BigFigure& core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB, int carry)
+template <class T>BigFigure& core_IntAdd_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB, int carry)
 {
 	int index_p = result.Detail->IntAllocatedLen - 1, index_r = OperandA.Detail->IntLen - 1;
 	char *SourceString = OperandA.Detail->NumInt, *String3 = result.Detail->StringHead;
@@ -508,6 +507,13 @@ BigFigure& core_IntSub(BigFigure & result, const BigFigure & OperandA, const Big
 	result.Detail->Illage = false;
 	return result;
 }
+template <class T>BigFigure& core_IntSub_Basis(BigFigure & result, const BigFigure & OperandA, T OperandB, int borrow)
+{
+
+
+
+	return result;
+}
 int core_FloatSub(BigFigure & result, const BigFigure & OperandA, const BigFigure & OperandB)
 {
 	//分两种情况
@@ -709,19 +715,25 @@ BigFigure& BFSub(BigFigure & result, const BigFigure & OperandA, const BigFigure
 /*
 等待负数判断
 */
-BigFigure& BFAdd(BigFigure & result, BigFigure & OperandA, double OperandB)
+BigFigure& BFAdd(BigFigure & result, BigFigure & OperandA, const double OperandB)
 {
 	BigFigure temp(1050, 1050);
 	temp.toBF(NumStringDetail(OperandB));
 	BFAdd(result, OperandA, temp);
 	return result;
 }
-BigFigure& BFSub(BigFigure & result, BigFigure & OperandA, double OperandB)
+BigFigure& BFSub(BigFigure & result, BigFigure & OperandA, const double OperandB)
 {
 	BigFigure temp(1050, 1050);
 	temp.toBF(NumStringDetail(OperandB));
 	BFSub(result, OperandA, temp);
 	return result;
+}
+
+//###记得增强健壮性
+BigFigure& BFAdd(BigFigure & result, BigFigure & OperandA, const __int64 OperandB)
+{
+	return core_IntAdd(result, OperandA, OperandB);
 }
 
 
@@ -791,8 +803,7 @@ BigFigure operator+(const BigFigure & OperandA, const BigFigure & OperandB)
 	BFAdd(temp, OperandA, OperandB);
 	return temp;
 }
-
-BigFigure operator+(const BigFigure & OperandA,const double OperandB)
+BigFigure operator+(const BigFigure & OperandA, const double OperandB)
 {
 	BigFigure B(1050, 1050);
 	B.toBF(NumStringDetail(OperandB));
@@ -801,7 +812,6 @@ BigFigure operator+(const BigFigure & OperandA,const double OperandB)
 	BFAdd(temp, OperandA, B);
 	return temp;
 }
-
 BigFigure operator-(const BigFigure & OperandA, const BigFigure & OperandB)
 {
 	BigFigure temp(OperandA.Detail->IntLen > OperandB.Detail->IntLen ? OperandA.Detail->IntLen : OperandB.Detail->IntLen,
@@ -809,7 +819,6 @@ BigFigure operator-(const BigFigure & OperandA, const BigFigure & OperandB)
 	BFSub(temp, OperandA, OperandB);
 	return temp;
 }
-
 BigFigure operator-(const BigFigure & OperandA, const double OperandB)
 {
 	BigFigure B(1050, 1050);
@@ -830,17 +839,14 @@ bool operator<(const BigFigure & OperandA, const BigFigure & OperandB)
 {
 	return BFCmp(OperandA, OperandB) < 0;
 }
-
 bool operator>(const BigFigure & OperandA, const BigFigure & OperandB)
 {
 	return BFCmp(OperandA, OperandB) > 0;
 }
-
 bool operator==(const BigFigure & OperandA, const BigFigure & OperandB)
 {
 	return BFCmp(OperandA, OperandB) == 0;
 }
-
 bool operator<=(const BigFigure & OperandA, const BigFigure & OperandB)
 {
 	return BFCmp(OperandA, OperandB) <= 0;

@@ -130,7 +130,7 @@ int main(int argc, const char * argv[]) {
 	bf2 = "551234.0036";
 
 	//std::cout << (bf + bf2) << std::endl;
-	bf3 = bf - 1.2;
+	bf3 = bf2 - 1.2;
 	bf3.printDetail();
 
 	system("pause");
